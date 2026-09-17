@@ -26,4 +26,31 @@ public class GlobalExceptionHandler {
         pd.setDetail(detail);
         return pd;
     }
+
+    @ExceptionHandler(AliasAlreadyExistsException.class)
+    public ProblemDetail handleAliasConflict(AliasAlreadyExistsException ex) {
+        log.warn("Alias conflict: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        pd.setTitle("Alias Already Exists");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(ReservedAliasException.class)
+    public ProblemDetail handleReservedAlias(ReservedAliasException ex) {
+        log.warn("Reserved alias rejected: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setTitle("Reserved Alias");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(ShortUrlNotFoundException.class)
+    public ProblemDetail handleShortUrlNotFound(ShortUrlNotFoundException ex) {
+        log.warn("Short URL not found: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Short URL Not Found");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
 }

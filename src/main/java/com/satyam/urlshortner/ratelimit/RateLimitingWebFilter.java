@@ -2,6 +2,7 @@ package com.satyam.urlshortner.ratelimit;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -15,8 +16,6 @@ import java.net.InetSocketAddress;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RateLimitingWebFilter implements WebFilter {
 
-    private static final String LIMITED_PATH = "/shorten";
-
     private final TokenBucketRateLimiter rateLimiter;
 
     public RateLimitingWebFilter(TokenBucketRateLimiter rateLimiter) {
@@ -25,12 +24,18 @@ public class RateLimitingWebFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        if (!LIMITED_PATH.equals(exchange.getRequest().getPath().value())) {
+        if (!isMutatingRequest(exchange)) {
             return chain.filter(exchange);
         }
 
         return rateLimiter.tryConsume(clientKey(exchange))
                 .flatMap(allowed -> allowed ? chain.filter(exchange) : reject(exchange));
+    }
+
+    // Redirects (GET) stay unthrottled to preserve ultra-low read latency; only writes are rate limited.
+    private boolean isMutatingRequest(ServerWebExchange exchange) {
+        HttpMethod method = exchange.getRequest().getMethod();
+        return HttpMethod.POST.equals(method) || HttpMethod.DELETE.equals(method);
     }
 
     private Mono<Void> reject(ServerWebExchange exchange) {

@@ -35,6 +35,9 @@ public class UrlEntity implements Persistable<Long> {
     @Column("is_custom_slug")
     private boolean customSlug;
 
+    @Column("disabled_at")
+    private Instant disabledAt;
+
     @Override
     public boolean isNew() {
         return true; // we only ever construct new rows this weekend — no update path exists yet
