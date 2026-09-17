@@ -9,3 +9,38 @@ spring:
     redis:
       host: localhost
       port: 6379
+  flyway:
+    url: jdbc:postgresql://localhost:5432/urlshortener
+    user: app
+    password: secret
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  snowflake:
+    worker-id: ${WORKER_ID:1}
+  rate-limit:
+    capacity: ${RATE_LIMIT_CAPACITY:20}
+    refill-tokens-per-second: ${RATE_LIMIT_REFILL_PER_SECOND:5}
+
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+    com.satyam: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"

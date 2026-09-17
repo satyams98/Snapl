@@ -34,8 +34,16 @@ services:
       SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/urlshortener
       SPRING_R2DBC_USERNAME: app
       SPRING_R2DBC_PASSWORD: secret
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_FLYWAY_URL: jdbc:postgresql://postgres:5432/urlshortener
+      SPRING_FLYWAY_USER: app
+      SPRING_FLYWAY_PASSWORD: secret
+      APP_BASE_URL: http://localhost:8080
+      # Each replica MUST get a distinct WORKER_ID (0-1023) to avoid Snowflake ID collisions.
+      WORKER_ID: 1
+      RATE_LIMIT_CAPACITY: 20
+      RATE_LIMIT_REFILL_PER_SECOND: 5
     depends_on:
       postgres:
         condition: service_healthy
