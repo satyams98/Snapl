@@ -2,7 +2,7 @@ spring:
   application:
     name: urlshortener
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/urlshortener
+    url: r2dbc:postgresql://localhost:15432/urlshortener
     username: app
     password: secret
   data:
@@ -10,24 +10,19 @@ spring:
       host: localhost
       port: 6379
   flyway:
-    url: jdbc:postgresql://localhost:5432/urlshortener
+    url: jdbc:postgresql://localhost:15432/urlshortener
     user: app
     password: secret
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        spring.json.add.type.headers: false
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
       group-id: urlshortener-analytics
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: com.satyam.urlshortner.analytics
-        spring.json.value.default.type: com.satyam.urlshortner.analytics.ClickEvent
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}

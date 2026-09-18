@@ -7,6 +7,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 
@@ -16,6 +17,8 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ClickEventConsumerTest {
+
+    private static final JsonMapper JSON_MAPPER = JsonMapper.builder().findAndAddModules().build();
 
     @Mock
     private ClickEventRepository repository;
@@ -33,7 +36,7 @@ class ClickEventConsumerTest {
         ClickEvent event = new ClickEvent("abc123", now, "127.0.0.1", "curl/8.0", "https://referrer.example.com");
         when(repository.save(any(ClickEventEntity.class))).thenReturn(Mono.just(new ClickEventEntity()));
 
-        consumer.onClickEvent(event);
+        consumer.onClickEvent(JSON_MAPPER.writeValueAsString(event));
 
         ArgumentCaptor<ClickEventEntity> captor = ArgumentCaptor.forClass(ClickEventEntity.class);
         verify(repository).save(captor.capture());
@@ -50,6 +53,13 @@ class ClickEventConsumerTest {
         ClickEvent event = new ClickEvent("abc123", Instant.now(), "127.0.0.1", "curl/8.0", null);
         when(repository.save(any(ClickEventEntity.class))).thenReturn(Mono.error(new RuntimeException("db down")));
 
-        consumer.onClickEvent(event);
+        consumer.onClickEvent(JSON_MAPPER.writeValueAsString(event));
+    }
+
+    @Test
+    void onClickEventDoesNotThrowOnMalformedPayload() {
+        consumer.onClickEvent("not valid json");
+
+        verify(repository, never()).save(any());
     }
 }
