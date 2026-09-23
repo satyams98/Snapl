@@ -26,6 +26,8 @@ spring:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  frontend:
+    origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   snowflake:
     worker-id: ${WORKER_ID:1}
   rate-limit:
@@ -33,6 +35,12 @@ app:
     refill-tokens-per-second: ${RATE_LIMIT_REFILL_PER_SECOND:5}
   kafka:
     click-events-topic: ${CLICK_EVENTS_TOPIC:url.click-events}
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-change-me-32bytes-minimum!}
+    access-token-ttl-minutes: ${JWT_ACCESS_TOKEN_TTL_MINUTES:15}
+    refresh-token-ttl-days: ${JWT_REFRESH_TOKEN_TTL_DAYS:30}
+  security:
+    refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:false}
 
 server:
   error:

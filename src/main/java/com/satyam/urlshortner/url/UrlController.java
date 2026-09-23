@@ -2,6 +2,7 @@ package com.satyam.urlshortner.url;
 
 import com.satyam.urlshortner.analytics.ClickEvent;
 import com.satyam.urlshortner.analytics.ClickEventPublisher;
+import com.satyam.urlshortner.auth.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -22,7 +23,8 @@ public class UrlController {
 
     @PostMapping("/shorten")
     public Mono<ResponseEntity<ShortenResponse>> shorten(@Valid @RequestBody ShortenRequest request) {
-        return urlService.shorten(request.longUrl(), request.customAlias())
+        return CurrentUser.get()
+                .flatMap(principal -> urlService.shorten(request.longUrl(), request.customAlias(), principal.orgId()))
                 .map(ResponseEntity::ok);
     }
 
@@ -41,7 +43,8 @@ public class UrlController {
 
     @DeleteMapping("/{code}")
     public Mono<ResponseEntity<Void>> disable(@PathVariable String code) {
-        return urlService.disable(code)
+        return CurrentUser.get()
+                .flatMap(principal -> urlService.disable(code, principal.orgId()))
                 .thenReturn(ResponseEntity.noContent().<Void>build());
     }
 

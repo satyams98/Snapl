@@ -46,13 +46,13 @@ class UrlServiceTest {
     void shortenReusesExistingEntryForSameLongUrl() {
         String longUrl = "https://example.com/some/very/long/path";
         String hash = UrlHasher.sha256Hex(longUrl);
-        UrlEntity existing = new UrlEntity(1L, "abc123", longUrl, hash, Instant.now(), null, false, null);
+        UrlEntity existing = new UrlEntity(1L, "abc123", longUrl, hash, Instant.now(), null, false, null, 1L, null);
 
-        when(repository.findFirstByLongUrlHash(hash)).thenReturn(Mono.just(existing));
+        when(repository.findFirstByLongUrlHashAndOrgId(hash, 1L)).thenReturn(Mono.just(existing));
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.set(anyString(), anyString(), any(Duration.class))).thenReturn(Mono.just(true));
 
-        StepVerifier.create(urlService.shorten(longUrl, null))
+        StepVerifier.create(urlService.shorten(longUrl, null, 1L))
                 .assertNext(response -> {
                     assertEquals("abc123", response.shortCode());
                     assertEquals("http://localhost:8080/abc123", response.shortUrl());
@@ -66,12 +66,12 @@ class UrlServiceTest {
     void shortenCreatesNewEntryWhenNoneExists() {
         String longUrl = "https://example.com/brand-new";
 
-        when(repository.findFirstByLongUrlHash(anyString())).thenReturn(Mono.empty());
+        when(repository.findFirstByLongUrlHashAndOrgId(anyString(), any())).thenReturn(Mono.empty());
         when(repository.save(any(UrlEntity.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.set(anyString(), anyString(), any(Duration.class))).thenReturn(Mono.just(true));
 
-        StepVerifier.create(urlService.shorten(longUrl, null))
+        StepVerifier.create(urlService.shorten(longUrl, null, 1L))
                 .assertNext(response -> assertEquals(longUrl, response.longUrl()))
                 .verifyComplete();
 
@@ -87,7 +87,7 @@ class UrlServiceTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.set(anyString(), anyString(), any(Duration.class))).thenReturn(Mono.just(true));
 
-        StepVerifier.create(urlService.shorten(longUrl, "my-alias"))
+        StepVerifier.create(urlService.shorten(longUrl, "my-alias", 1L))
                 .assertNext(response -> assertEquals("my-alias", response.shortCode()))
                 .verifyComplete();
     }
@@ -95,18 +95,18 @@ class UrlServiceTest {
     @Test
     void shortenWithTakenAliasFails() {
         String longUrl = "https://example.com/custom";
-        UrlEntity existing = new UrlEntity(1L, "taken", "https://other.example.com", "hash", Instant.now(), null, true, null);
+        UrlEntity existing = new UrlEntity(1L, "taken", "https://other.example.com", "hash", Instant.now(), null, true, null, 1L, null);
 
         when(repository.findByShortCode("taken")).thenReturn(Mono.just(existing));
 
-        StepVerifier.create(urlService.shorten(longUrl, "taken"))
+        StepVerifier.create(urlService.shorten(longUrl, "taken", 1L))
                 .expectError(AliasAlreadyExistsException.class)
                 .verify();
     }
 
     @Test
     void shortenWithReservedAliasFails() {
-        StepVerifier.create(urlService.shorten("https://example.com", "shorten"))
+        StepVerifier.create(urlService.shorten("https://example.com", "shorten", 1L))
                 .expectError(ReservedAliasException.class)
                 .verify();
     }
@@ -115,7 +115,7 @@ class UrlServiceTest {
     void resolveReturnsEmptyForExpiredLink() {
         String shortCode = "expired1";
         UrlEntity expired = new UrlEntity(1L, shortCode, "https://example.com", "hash",
-                Instant.now().minusSeconds(3600), Instant.now().minusSeconds(60), false, null);
+                Instant.now().minusSeconds(3600), Instant.now().minusSeconds(60), false, null, 1L, null);
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get(shortCode)).thenReturn(Mono.empty());
@@ -129,7 +129,7 @@ class UrlServiceTest {
     void resolveReturnsEmptyForDisabledLink() {
         String shortCode = "disabled1";
         UrlEntity disabled = new UrlEntity(1L, shortCode, "https://example.com", "hash",
-                Instant.now().minusSeconds(3600), null, false, Instant.now().minusSeconds(10));
+                Instant.now().minusSeconds(3600), null, false, Instant.now().minusSeconds(10), 1L, null);
 
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get(shortCode)).thenReturn(Mono.empty());
@@ -155,10 +155,10 @@ class UrlServiceTest {
     @Test
     void disableEvictsCacheWhenRowUpdated() {
         String shortCode = "abc123";
-        when(repository.disableByShortCode(eq(shortCode), any(Instant.class))).thenReturn(Mono.just(1));
+        when(repository.disableByShortCodeAndOrgId(eq(shortCode), eq(1L), any(Instant.class))).thenReturn(Mono.just(1));
         when(redisTemplate.delete(shortCode)).thenReturn(Mono.just(1L));
 
-        StepVerifier.create(urlService.disable(shortCode)).verifyComplete();
+        StepVerifier.create(urlService.disable(shortCode, 1L)).verifyComplete();
 
         verify(redisTemplate).delete(shortCode);
     }
@@ -166,9 +166,9 @@ class UrlServiceTest {
     @Test
     void disableFailsWhenCodeDoesNotExist() {
         String shortCode = "missing";
-        when(repository.disableByShortCode(eq(shortCode), any(Instant.class))).thenReturn(Mono.just(0));
+        when(repository.disableByShortCodeAndOrgId(eq(shortCode), eq(1L), any(Instant.class))).thenReturn(Mono.just(0));
 
-        StepVerifier.create(urlService.disable(shortCode))
+        StepVerifier.create(urlService.disable(shortCode, 1L))
                 .expectError(ShortUrlNotFoundException.class)
                 .verify();
     }

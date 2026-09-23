@@ -29,19 +29,19 @@ public class UrlService {
     private static final Set<String> RESERVED_ALIASES = Set.of(
             "shorten", "actuator", "favicon.ico", "robots.txt", "health");
 
-    public Mono<ShortenResponse> shorten(String longUrl, String customAlias) {
+    public Mono<ShortenResponse> shorten(String longUrl, String customAlias, Long orgId) {
         if (customAlias != null) {
-            return createCustomAlias(longUrl, customAlias);
+            return createCustomAlias(longUrl, customAlias, orgId);
         }
 
         String longUrlHash = UrlHasher.sha256Hex(longUrl);
 
-        return repository.findFirstByLongUrlHash(longUrlHash)
+        return repository.findFirstByLongUrlHashAndOrgId(longUrlHash, orgId)
                 .flatMap(existing -> cache(existing).then(Mono.just(toResponse(existing))))
-                .switchIfEmpty(Mono.defer(() -> createShortUrl(longUrl, longUrlHash)));
+                .switchIfEmpty(Mono.defer(() -> createShortUrl(longUrl, longUrlHash, orgId)));
     }
 
-    private Mono<ShortenResponse> createCustomAlias(String longUrl, String customAlias) {
+    private Mono<ShortenResponse> createCustomAlias(String longUrl, String customAlias, Long orgId) {
         if (RESERVED_ALIASES.contains(customAlias.toLowerCase())) {
             return Mono.error(new ReservedAliasException(customAlias));
         }
@@ -51,15 +51,15 @@ public class UrlService {
                 .switchIfEmpty(Mono.defer(() -> {
                     long id = idGenerator.nextId();
                     String longUrlHash = UrlHasher.sha256Hex(longUrl);
-                    UrlEntity entity = new UrlEntity(id, customAlias, longUrl, longUrlHash, Instant.now(), null, true, null);
+                    UrlEntity entity = new UrlEntity(id, customAlias, longUrl, longUrlHash, Instant.now(), null, true, null, orgId, null);
                     return repository.save(entity).flatMap(saved -> cache(saved).then(Mono.just(toResponse(saved))));
                 }));
     }
 
-    private Mono<ShortenResponse> createShortUrl(String longUrl, String longUrlHash) {
+    private Mono<ShortenResponse> createShortUrl(String longUrl, String longUrlHash, Long orgId) {
         long id = idGenerator.nextId();
         String shortCode = Base62Encoder.encode(id);
-        UrlEntity entity = new UrlEntity(id, shortCode, longUrl, longUrlHash, Instant.now(), null, false, null);
+        UrlEntity entity = new UrlEntity(id, shortCode, longUrl, longUrlHash, Instant.now(), null, false, null, orgId, null);
 
         return repository.save(entity)
                 .flatMap(saved -> cache(saved).then(Mono.just(toResponse(saved))));
@@ -74,8 +74,8 @@ public class UrlService {
                 ));
     }
 
-    public Mono<Void> disable(String shortCode) {
-        return repository.disableByShortCode(shortCode, Instant.now())
+    public Mono<Void> disable(String shortCode, Long orgId) {
+        return repository.disableByShortCodeAndOrgId(shortCode, orgId, Instant.now())
                 .flatMap(rowsUpdated -> rowsUpdated > 0
                         ? redisTemplate.delete(shortCode).then()
                         : Mono.error(new ShortUrlNotFoundException(shortCode)));

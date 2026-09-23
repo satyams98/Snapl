@@ -1,11 +1,18 @@
 package com.satyam.urlshortner.url;
 
 import com.satyam.urlshortner.analytics.ClickEventPublisher;
+import com.satyam.urlshortner.auth.AuthPrincipal;
+import com.satyam.urlshortner.auth.BearerTokenAuthenticationConverter;
+import com.satyam.urlshortner.auth.JwtAuthenticationManager;
+import com.satyam.urlshortner.auth.JwtService;
+import com.satyam.urlshortner.auth.SecurityConfig;
+import com.satyam.urlshortner.org.Role;
 import com.satyam.urlshortner.ratelimit.TokenBucketRateLimiter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -13,15 +20,24 @@ import reactor.core.publisher.Mono;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+// SecurityConfig is imported (rather than mocking the security context) so requests are
+// authenticated through the real JWT filter chain, exercising it the same way production traffic does.
 @WebFluxTest(UrlController.class)
+@Import({SecurityConfig.class, JwtAuthenticationManager.class, BearerTokenAuthenticationConverter.class, JwtService.class})
 class UrlControllerTest {
+
+    private static final AuthPrincipal PRINCIPAL = new AuthPrincipal(1L, "owner@acme.test", 1L, Role.OWNER);
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @Autowired
+    private JwtService jwtService;
 
     @MockitoBean
     private UrlService urlService;
@@ -34,17 +50,21 @@ class UrlControllerTest {
     @MockitoBean
     private TokenBucketRateLimiter tokenBucketRateLimiter;
 
+    private WebTestClient authenticatedClient;
+
     @BeforeEach
     void allowAllRequests() {
         when(tokenBucketRateLimiter.tryConsume(anyString())).thenReturn(Mono.just(true));
+        String token = jwtService.issueAccessToken(PRINCIPAL);
+        authenticatedClient = webTestClient.mutate().defaultHeader("Authorization", "Bearer " + token).build();
     }
 
     @Test
     void shortenReturnsOkWithBody() {
         ShortenResponse response = new ShortenResponse("abc123", "http://localhost:8080/abc123", "https://example.com");
-        when(urlService.shorten(anyString(), any())).thenReturn(Mono.just(response));
+        when(urlService.shorten(anyString(), any(), eq(1L))).thenReturn(Mono.just(response));
 
-        webTestClient.post().uri("/shorten")
+        authenticatedClient.post().uri("/shorten")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("""
                         {"longUrl":"https://example.com"}""")
@@ -56,7 +76,7 @@ class UrlControllerTest {
 
     @Test
     void shortenRejectsInvalidLongUrl() {
-        webTestClient.post().uri("/shorten")
+        authenticatedClient.post().uri("/shorten")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("""
                         {"longUrl":"not-a-url"}""")
@@ -91,18 +111,18 @@ class UrlControllerTest {
 
     @Test
     void disableReturnsNoContent() {
-        when(urlService.disable("abc123")).thenReturn(Mono.empty());
+        when(urlService.disable("abc123", 1L)).thenReturn(Mono.empty());
 
-        webTestClient.delete().uri("/abc123")
+        authenticatedClient.delete().uri("/abc123")
                 .exchange()
                 .expectStatus().isNoContent();
     }
 
     @Test
     void disableReturns404WhenCodeMissing() {
-        when(urlService.disable("missing")).thenReturn(Mono.error(new ShortUrlNotFoundException("missing")));
+        when(urlService.disable("missing", 1L)).thenReturn(Mono.error(new ShortUrlNotFoundException("missing")));
 
-        webTestClient.delete().uri("/missing")
+        authenticatedClient.delete().uri("/missing")
                 .exchange()
                 .expectStatus().isNotFound();
     }

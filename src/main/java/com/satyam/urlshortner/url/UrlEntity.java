@@ -38,6 +38,12 @@ public class UrlEntity implements Persistable<Long> {
     @Column("disabled_at")
     private Instant disabledAt;
 
+    @Column("org_id")
+    private Long orgId;
+
+    @Column("folder_id")
+    private Long folderId;
+
     @Override
     public boolean isNew() {
         return true; // we only ever construct new rows this weekend — no update path exists yet
