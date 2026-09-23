@@ -1,5 +1,6 @@
 package com.satyam.urlshortner.auth;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AbstractUserDetailsReactiveAuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
@@ -11,6 +12,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+// @Primary breaks the ambiguity Spring Security's own auto-config hits when resolving a single
+// ReactiveAuthenticationManager bean (e.g. for its unused httpBasic/formLogin defaults); our own
+// SecurityConfig still injects both this and ApiKeyAuthenticationManager by their concrete types.
+@Primary
 @Component
 public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
 

@@ -1,5 +1,7 @@
 package com.satyam.urlshortner.ratelimit;
 
+import com.satyam.urlshortner.auth.ApiKeyAuthenticationConverter;
+import com.satyam.urlshortner.url.UrlHasher;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
@@ -45,6 +47,12 @@ public class RateLimitingWebFilter implements WebFilter {
     }
 
     private String clientKey(ServerWebExchange exchange) {
+        // Keyed by the presented API key (hashed) rather than IP when present, so integrations get their
+        // own bucket independent of shared egress IPs; validity of the key is checked later by auth.
+        String apiKey = exchange.getRequest().getHeaders().getFirst(ApiKeyAuthenticationConverter.API_KEY_HEADER);
+        if (apiKey != null && !apiKey.isBlank()) {
+            return "apikey:" + UrlHasher.sha256Hex(apiKey);
+        }
         InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
         return remoteAddress != null && remoteAddress.getAddress() != null
                 ? remoteAddress.getAddress().getHostAddress()

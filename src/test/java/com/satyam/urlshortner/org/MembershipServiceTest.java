@@ -32,8 +32,8 @@ class MembershipServiceTest {
 
     private MembershipService membershipService;
 
-    private static final AuthPrincipal MEMBER = new AuthPrincipal(1L, "member@acme.test", 10L, Role.MEMBER);
-    private static final AuthPrincipal ADMIN = new AuthPrincipal(2L, "admin@acme.test", 10L, Role.ADMIN);
+    private static final AuthPrincipal MEMBER = AuthPrincipal.forUser(1L, "member@acme.test", 10L, Role.MEMBER);
+    private static final AuthPrincipal ADMIN = AuthPrincipal.forUser(2L, "admin@acme.test", 10L, Role.ADMIN);
 
     @BeforeEach
     void setUp() {

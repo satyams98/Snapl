@@ -9,6 +9,7 @@ import LinksPage from "@/pages/LinksPage";
 import LinkDetailPage from "@/pages/LinkDetailPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import DomainsPage from "@/pages/DomainsPage";
+import ApiKeysPage from "@/pages/ApiKeysPage";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ function App() {
                 <Route path="links/:code" element={<LinkDetailPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="domains" element={<DomainsPage />} />
+                <Route path="api-keys" element={<ApiKeysPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

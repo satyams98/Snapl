@@ -1,6 +1,10 @@
 package com.satyam.urlshortner.url;
 
 import com.satyam.urlshortner.analytics.ClickEventPublisher;
+import com.satyam.urlshortner.apikey.ApiKey;
+import com.satyam.urlshortner.apikey.ApiKeyRepository;
+import com.satyam.urlshortner.auth.ApiKeyAuthenticationConverter;
+import com.satyam.urlshortner.auth.ApiKeyAuthenticationManager;
 import com.satyam.urlshortner.auth.AuthPrincipal;
 import com.satyam.urlshortner.auth.BearerTokenAuthenticationConverter;
 import com.satyam.urlshortner.auth.JwtAuthenticationManager;
@@ -19,6 +23,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,10 +35,11 @@ import static org.mockito.Mockito.when;
 // SecurityConfig is imported (rather than mocking the security context) so requests are
 // authenticated through the real JWT filter chain, exercising it the same way production traffic does.
 @WebFluxTest(UrlController.class)
-@Import({SecurityConfig.class, JwtAuthenticationManager.class, BearerTokenAuthenticationConverter.class, JwtService.class})
+@Import({SecurityConfig.class, JwtAuthenticationManager.class, BearerTokenAuthenticationConverter.class, JwtService.class,
+        ApiKeyAuthenticationManager.class, ApiKeyAuthenticationConverter.class})
 class UrlControllerTest {
 
-    private static final AuthPrincipal PRINCIPAL = new AuthPrincipal(1L, "owner@acme.test", 1L, Role.OWNER);
+    private static final AuthPrincipal PRINCIPAL = AuthPrincipal.forUser(1L, "owner@acme.test", 1L, Role.OWNER);
 
     @Autowired
     private WebTestClient webTestClient;
@@ -53,6 +60,9 @@ class UrlControllerTest {
 
     @MockitoBean
     private CustomDomainRepository customDomainRepository;
+
+    @MockitoBean
+    private ApiKeyRepository apiKeyRepository;
 
     private WebTestClient authenticatedClient;
 
@@ -130,5 +140,39 @@ class UrlControllerTest {
         authenticatedClient.delete().uri("/missing")
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void shortenRejectsReadOnlyApiKey() {
+        WebTestClient readOnlyClient = readOnlyApiKeyClient();
+
+        readOnlyClient.post().uri("/shorten")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"longUrl":"https://example.com"}""")
+                .exchange()
+                .expectStatus().isForbidden();
+
+        verifyNoInteractions(urlService);
+    }
+
+    @Test
+    void disableRejectsReadOnlyApiKey() {
+        WebTestClient readOnlyClient = readOnlyApiKeyClient();
+
+        readOnlyClient.delete().uri("/abc123")
+                .exchange()
+                .expectStatus().isForbidden();
+
+        verifyNoInteractions(urlService);
+    }
+
+    private WebTestClient readOnlyApiKeyClient() {
+        ApiKey readOnlyKey = new ApiKey(1L, 1L, "Read only", "usk_abc123", UrlHasher.sha256Hex("usk_read-only-raw"),
+                "READ", Instant.now(), null, null);
+        when(apiKeyRepository.findByHashedSecretAndRevokedAtIsNull(UrlHasher.sha256Hex("usk_read-only-raw")))
+                .thenReturn(Mono.just(readOnlyKey));
+        when(apiKeyRepository.touchLastUsed(eq(1L), any(Instant.class))).thenReturn(Mono.just(1));
+        return webTestClient.mutate().defaultHeader("X-API-Key", "usk_read-only-raw").build();
     }
 }

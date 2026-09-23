@@ -78,7 +78,7 @@ public class AuthService {
     }
 
     private Mono<AuthResult> issueTokens(User user, Membership membership, Organization org) {
-        AuthPrincipal principal = new AuthPrincipal(user.getId(), user.getEmail(), org.getId(), membership.getRole());
+        AuthPrincipal principal = AuthPrincipal.forUser(user.getId(), user.getEmail(), org.getId(), membership.getRole());
         String accessToken = jwtService.issueAccessToken(principal);
         String rawRefreshToken = jwtService.generateRefreshTokenValue();
         RefreshToken refreshToken = new RefreshToken(null, user.getId(), UrlHasher.sha256Hex(rawRefreshToken),

@@ -48,7 +48,7 @@ public class JwtService {
             Claims claims = Jwts.parser().verifyWith(signingKey).build()
                     .parseSignedClaims(token)
                     .getPayload();
-            return new AuthPrincipal(
+            return AuthPrincipal.forUser(
                     Long.valueOf(claims.getSubject()),
                     claims.get("email", String.class),
                     claims.get(CLAIM_ORG_ID, Long.class),

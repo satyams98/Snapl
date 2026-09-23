@@ -27,13 +27,19 @@ public class SecurityConfig {
 
     private final JwtAuthenticationManager authenticationManager;
     private final BearerTokenAuthenticationConverter authenticationConverter;
+    private final ApiKeyAuthenticationManager apiKeyAuthenticationManager;
+    private final ApiKeyAuthenticationConverter apiKeyAuthenticationConverter;
     private final String frontendOrigin;
 
     public SecurityConfig(JwtAuthenticationManager authenticationManager,
                            BearerTokenAuthenticationConverter authenticationConverter,
+                           ApiKeyAuthenticationManager apiKeyAuthenticationManager,
+                           ApiKeyAuthenticationConverter apiKeyAuthenticationConverter,
                            @Value("${app.frontend.origin}") String frontendOrigin) {
         this.authenticationManager = authenticationManager;
         this.authenticationConverter = authenticationConverter;
+        this.apiKeyAuthenticationManager = apiKeyAuthenticationManager;
+        this.apiKeyAuthenticationConverter = apiKeyAuthenticationConverter;
         this.frontendOrigin = frontendOrigin;
     }
 
@@ -47,6 +53,11 @@ public class SecurityConfig {
         AuthenticationWebFilter authenticationWebFilter = new AuthenticationWebFilter(authenticationManager);
         authenticationWebFilter.setServerAuthenticationConverter(authenticationConverter);
 
+        // A second AuthenticationWebFilter for the X-API-Key header; its converter yields nothing when the
+        // header is absent, so it's a no-op fall-through whenever a request already authenticated via JWT.
+        AuthenticationWebFilter apiKeyWebFilter = new AuthenticationWebFilter(apiKeyAuthenticationManager);
+        apiKeyWebFilter.setServerAuthenticationConverter(apiKeyAuthenticationConverter);
+
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
@@ -57,6 +68,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/*", "/actuator/**").permitAll()
                         .anyExchange().authenticated())
                 .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .addFilterAfter(apiKeyWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((exchange, ex) ->
                                 Mono.fromRunnable(() -> exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED)))
@@ -69,7 +81,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(frontendOrigin));
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-API-Key"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

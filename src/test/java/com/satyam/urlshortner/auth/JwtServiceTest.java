@@ -19,7 +19,7 @@ class JwtServiceTest {
 
     @Test
     void issuedAccessTokenRoundTripsToSamePrincipal() {
-        AuthPrincipal principal = new AuthPrincipal(42L, "user@acme.test", 7L, Role.ADMIN);
+        AuthPrincipal principal = AuthPrincipal.forUser(42L, "user@acme.test", 7L, Role.ADMIN);
 
         String token = jwtService.issueAccessToken(principal);
         AuthPrincipal parsed = jwtService.parseAccessToken(token);
@@ -35,7 +35,7 @@ class JwtServiceTest {
     @Test
     void parseAccessTokenRejectsTokenSignedWithDifferentSecret() {
         JwtService otherService = new JwtService(new JwtProperties("a-completely-different-secret-32-bytes+", 15, 30));
-        String token = otherService.issueAccessToken(new AuthPrincipal(1L, "a@b.test", 1L, Role.OWNER));
+        String token = otherService.issueAccessToken(AuthPrincipal.forUser(1L, "a@b.test", 1L, Role.OWNER));
 
         assertThrows(InvalidTokenException.class, () -> jwtService.parseAccessToken(token));
     }

@@ -1,8 +1,10 @@
 package com.satyam.urlshortner.ratelimit;
 
+import com.satyam.urlshortner.url.UrlHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
@@ -62,5 +64,19 @@ class RateLimitingWebFilterTest {
 
         verify(chain).filter(exchange);
         verifyNoInteractions(rateLimiter);
+    }
+
+    @Test
+    void keysByHashedApiKeyRatherThanIpWhenHeaderPresent() {
+        var exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/shorten").header("X-API-Key", "usk_some-raw-key"));
+        when(rateLimiter.tryConsume(anyString())).thenReturn(Mono.just(true));
+        when(chain.filter(exchange)).thenReturn(Mono.empty());
+
+        StepVerifier.create(filter.filter(exchange, chain)).verifyComplete();
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(rateLimiter).tryConsume(keyCaptor.capture());
+        assertEquals("apikey:" + UrlHasher.sha256Hex("usk_some-raw-key"), keyCaptor.getValue());
     }
 }

@@ -1,9 +1,11 @@
 package com.satyam.urlshortner.url;
 
 import com.satyam.urlshortner.auth.EmailAlreadyRegisteredException;
+import com.satyam.urlshortner.auth.InsufficientScopeException;
 import com.satyam.urlshortner.auth.InvalidCredentialsException;
 import com.satyam.urlshortner.auth.InvalidTokenException;
 import com.satyam.urlshortner.auth.NoOrganizationMembershipException;
+import com.satyam.urlshortner.apikey.ApiKeyNotFoundException;
 import com.satyam.urlshortner.domain.DomainAlreadyExistsException;
 import com.satyam.urlshortner.domain.DomainNotFoundException;
 import com.satyam.urlshortner.domain.DomainVerificationFailedException;
@@ -83,7 +85,7 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler({NoOrganizationMembershipException.class, AccessDeniedForRoleException.class, InvitationEmailMismatchException.class})
+    @ExceptionHandler({NoOrganizationMembershipException.class, AccessDeniedForRoleException.class, InvitationEmailMismatchException.class, InsufficientScopeException.class})
     public ProblemDetail handleForbidden(RuntimeException ex) {
         log.warn("Access denied: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
@@ -151,6 +153,15 @@ public class GlobalExceptionHandler {
         log.warn("Domain verification failed: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.UNPROCESSABLE_ENTITY);
         pd.setTitle("Domain Verification Failed");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(ApiKeyNotFoundException.class)
+    public ProblemDetail handleApiKeyNotFound(ApiKeyNotFoundException ex) {
+        log.warn("API key not found: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("API Key Not Found");
         pd.setDetail(ex.getMessage());
         return pd;
     }

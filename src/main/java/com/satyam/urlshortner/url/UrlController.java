@@ -3,6 +3,7 @@ package com.satyam.urlshortner.url;
 import com.satyam.urlshortner.analytics.ClickEvent;
 import com.satyam.urlshortner.analytics.ClickEventPublisher;
 import com.satyam.urlshortner.auth.CurrentUser;
+import com.satyam.urlshortner.auth.InsufficientScopeException;
 import com.satyam.urlshortner.domain.DomainResolutionFilter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,9 @@ public class UrlController {
     @PostMapping("/shorten")
     public Mono<ResponseEntity<ShortenResponse>> shorten(@Valid @RequestBody ShortenRequest request) {
         return CurrentUser.get()
-                .flatMap(principal -> urlService.shorten(request.longUrl(), request.customAlias(), principal.orgId()))
+                .flatMap(principal -> principal.hasWriteAccess()
+                        ? urlService.shorten(request.longUrl(), request.customAlias(), principal.orgId())
+                        : Mono.error(new InsufficientScopeException()))
                 .map(ResponseEntity::ok);
     }
 
@@ -47,7 +50,9 @@ public class UrlController {
     @DeleteMapping("/{code}")
     public Mono<ResponseEntity<Void>> disable(@PathVariable String code) {
         return CurrentUser.get()
-                .flatMap(principal -> urlService.disable(code, principal.orgId()))
+                .flatMap(principal -> principal.hasWriteAccess()
+                        ? urlService.disable(code, principal.orgId())
+                        : Mono.error(new InsufficientScopeException()))
                 .thenReturn(ResponseEntity.noContent().<Void>build());
     }
 
