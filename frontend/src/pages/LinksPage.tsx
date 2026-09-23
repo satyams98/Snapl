@@ -12,7 +12,7 @@ const PAGE_SIZE = 20;
 
 export default function LinksPage() {
   const [searchParams] = useSearchParams();
-  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
+  const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState<"" | "active" | "disabled">("");
   const [folderId, setFolderId] = useState("");
@@ -22,6 +22,10 @@ export default function LinksPage() {
   const [editingLink, setEditingLink] = useState<UrlSummary | undefined>(undefined);
 
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") ?? "");
+  }, [searchParams]);
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search), 300);
