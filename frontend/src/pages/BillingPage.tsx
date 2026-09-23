@@ -55,7 +55,7 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Billing &amp; plan</h1>
+        <h1 className="text-h3 font-medium">Billing &amp; plan</h1>
         <p className="text-sm text-muted-foreground">Manage your organization's plan and usage.</p>
       </div>
 
@@ -63,7 +63,11 @@ export default function BillingPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {usage?.planName ?? "—"}
-            {usage && <Badge variant="secondary">{usage.subscriptionStatus}</Badge>}
+            {usage && (
+              <Badge variant={usage.subscriptionStatus === "ACTIVE" ? "success" : usage.subscriptionStatus === "PAST_DUE" ? "warning" : "destructive"}>
+                {usage.subscriptionStatus}
+              </Badge>
+            )}
           </CardTitle>
           <CardDescription>Current plan and usage this billing period.</CardDescription>
         </CardHeader>

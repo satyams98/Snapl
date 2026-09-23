@@ -46,7 +46,7 @@ export default function ApiKeysPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">API keys</h1>
+        <h1 className="text-h3 font-medium">API keys</h1>
         <p className="text-sm text-muted-foreground">
           Use an API key to call the shortening API programmatically. Owners and admins can manage keys.
         </p>

@@ -45,7 +45,7 @@ export default function DomainsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Custom domains</h1>
+        <h1 className="text-h3 font-medium">Custom domains</h1>
         <p className="text-sm text-muted-foreground">
           Brand your short links with your own domain. TLS/SSL for verified domains is provisioned separately by
           your infrastructure team.
@@ -88,7 +88,7 @@ export default function DomainsPage() {
                 <CardTitle className="text-base">{item.domain}</CardTitle>
                 <CardDescription>Added {new Date(item.createdAt).toLocaleDateString()}</CardDescription>
               </div>
-              <Badge variant={item.verified ? "default" : "secondary"}>
+              <Badge variant={item.verified ? "success" : "warning"}>
                 {item.verified ? "Verified" : "Pending verification"}
               </Badge>
             </CardHeader>
