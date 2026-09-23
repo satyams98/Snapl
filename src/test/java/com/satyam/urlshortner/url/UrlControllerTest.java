@@ -6,6 +6,7 @@ import com.satyam.urlshortner.auth.BearerTokenAuthenticationConverter;
 import com.satyam.urlshortner.auth.JwtAuthenticationManager;
 import com.satyam.urlshortner.auth.JwtService;
 import com.satyam.urlshortner.auth.SecurityConfig;
+import com.satyam.urlshortner.domain.CustomDomainRepository;
 import com.satyam.urlshortner.org.Role;
 import com.satyam.urlshortner.ratelimit.TokenBucketRateLimiter;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,16 +46,20 @@ class UrlControllerTest {
     @MockitoBean
     private ClickEventPublisher clickEventPublisher;
 
-    // RateLimitingWebFilter is a WebFilter, so @WebFluxTest auto-detects and wires it in;
-    // its TokenBucketRateLimiter dependency must be mocked to satisfy the slice context.
+    // RateLimitingWebFilter and DomainResolutionFilter are WebFilters, so @WebFluxTest auto-detects and wires
+    // them in; their dependencies must be mocked to satisfy the slice context.
     @MockitoBean
     private TokenBucketRateLimiter tokenBucketRateLimiter;
+
+    @MockitoBean
+    private CustomDomainRepository customDomainRepository;
 
     private WebTestClient authenticatedClient;
 
     @BeforeEach
     void allowAllRequests() {
         when(tokenBucketRateLimiter.tryConsume(anyString())).thenReturn(Mono.just(true));
+        when(customDomainRepository.findByDomainAndVerifiedAtIsNotNull(anyString())).thenReturn(Mono.empty());
         String token = jwtService.issueAccessToken(PRINCIPAL);
         authenticatedClient = webTestClient.mutate().defaultHeader("Authorization", "Bearer " + token).build();
     }
@@ -88,7 +93,7 @@ class UrlControllerTest {
 
     @Test
     void redirectReturns302AndPublishesClickEvent() {
-        when(urlService.resolve("abc123")).thenReturn(Mono.just("https://example.com"));
+        when(urlService.resolve("abc123", null)).thenReturn(Mono.just("https://example.com"));
 
         webTestClient.get().uri("/abc123")
                 .exchange()
@@ -100,7 +105,7 @@ class UrlControllerTest {
 
     @Test
     void redirectReturns404WhenNotFound() {
-        when(urlService.resolve("missing")).thenReturn(Mono.empty());
+        when(urlService.resolve("missing", null)).thenReturn(Mono.empty());
 
         webTestClient.get().uri("/missing")
                 .exchange()

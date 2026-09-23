@@ -8,6 +8,7 @@ import RegisterPage from "@/pages/auth/RegisterPage";
 import LinksPage from "@/pages/LinksPage";
 import LinkDetailPage from "@/pages/LinkDetailPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
+import DomainsPage from "@/pages/DomainsPage";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ function App() {
                 <Route index element={<LinksPage />} />
                 <Route path="links/:code" element={<LinkDetailPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="domains" element={<DomainsPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

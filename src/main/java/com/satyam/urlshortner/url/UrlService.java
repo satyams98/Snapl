@@ -65,7 +65,13 @@ public class UrlService {
                 .flatMap(saved -> cache(saved).then(Mono.just(toResponse(saved))));
     }
 
-    public Mono<String> resolve(String shortCode) {
+    public Mono<String> resolve(String shortCode, Long restrictToOrgId) {
+        if (restrictToOrgId != null) {
+            // Custom-domain traffic bypasses the cache so branded domains can't serve another org's link.
+            return repository.findByShortCode(shortCode)
+                    .filter(entity -> !isBlocked(entity) && restrictToOrgId.equals(entity.getOrgId()))
+                    .map(UrlEntity::getLongUrl);
+        }
         return redisTemplate.opsForValue().get(shortCode)
                 .switchIfEmpty(Mono.defer(() ->
                         repository.findByShortCode(shortCode)

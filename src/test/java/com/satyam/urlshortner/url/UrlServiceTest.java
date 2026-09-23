@@ -121,7 +121,7 @@ class UrlServiceTest {
         when(valueOperations.get(shortCode)).thenReturn(Mono.empty());
         when(repository.findByShortCode(shortCode)).thenReturn(Mono.just(expired));
 
-        StepVerifier.create(urlService.resolve(shortCode))
+        StepVerifier.create(urlService.resolve(shortCode, null))
                 .verifyComplete();
     }
 
@@ -135,7 +135,7 @@ class UrlServiceTest {
         when(valueOperations.get(shortCode)).thenReturn(Mono.empty());
         when(repository.findByShortCode(shortCode)).thenReturn(Mono.just(disabled));
 
-        StepVerifier.create(urlService.resolve(shortCode))
+        StepVerifier.create(urlService.resolve(shortCode, null))
                 .verifyComplete();
     }
 
@@ -145,7 +145,7 @@ class UrlServiceTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get(shortCode)).thenReturn(Mono.just("https://example.com/cached"));
 
-        StepVerifier.create(urlService.resolve(shortCode))
+        StepVerifier.create(urlService.resolve(shortCode, null))
                 .expectNext("https://example.com/cached")
                 .verifyComplete();
 

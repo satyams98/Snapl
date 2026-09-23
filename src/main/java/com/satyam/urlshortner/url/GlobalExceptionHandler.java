@@ -4,6 +4,9 @@ import com.satyam.urlshortner.auth.EmailAlreadyRegisteredException;
 import com.satyam.urlshortner.auth.InvalidCredentialsException;
 import com.satyam.urlshortner.auth.InvalidTokenException;
 import com.satyam.urlshortner.auth.NoOrganizationMembershipException;
+import com.satyam.urlshortner.domain.DomainAlreadyExistsException;
+import com.satyam.urlshortner.domain.DomainNotFoundException;
+import com.satyam.urlshortner.domain.DomainVerificationFailedException;
 import com.satyam.urlshortner.org.AccessDeniedForRoleException;
 import com.satyam.urlshortner.org.InvitationEmailMismatchException;
 import com.satyam.urlshortner.org.InvitationExpiredException;
@@ -121,6 +124,33 @@ public class GlobalExceptionHandler {
         log.warn("Invalid bulk action: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         pd.setTitle("Invalid Bulk Action");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(DomainNotFoundException.class)
+    public ProblemDetail handleDomainNotFound(DomainNotFoundException ex) {
+        log.warn("Domain not found: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Domain Not Found");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(DomainAlreadyExistsException.class)
+    public ProblemDetail handleDomainAlreadyExists(DomainAlreadyExistsException ex) {
+        log.warn("Domain conflict: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        pd.setTitle("Domain Already Registered");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(DomainVerificationFailedException.class)
+    public ProblemDetail handleDomainVerificationFailed(DomainVerificationFailedException ex) {
+        log.warn("Domain verification failed: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.UNPROCESSABLE_ENTITY);
+        pd.setTitle("Domain Verification Failed");
         pd.setDetail(ex.getMessage());
         return pd;
     }

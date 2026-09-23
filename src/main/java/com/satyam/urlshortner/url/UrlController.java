@@ -3,6 +3,7 @@ package com.satyam.urlshortner.url;
 import com.satyam.urlshortner.analytics.ClickEvent;
 import com.satyam.urlshortner.analytics.ClickEventPublisher;
 import com.satyam.urlshortner.auth.CurrentUser;
+import com.satyam.urlshortner.domain.DomainResolutionFilter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
@@ -29,8 +31,9 @@ public class UrlController {
     }
 
     @GetMapping("/{code}")
-    public Mono<ResponseEntity<Void>> redirect(@PathVariable String code, ServerHttpRequest request) {
-        return urlService.resolve(code)
+    public Mono<ResponseEntity<Void>> redirect(@PathVariable String code, ServerHttpRequest request, ServerWebExchange exchange) {
+        Long restrictToOrgId = exchange.getAttribute(DomainResolutionFilter.RESOLVED_ORG_ID_ATTRIBUTE);
+        return urlService.resolve(code, restrictToOrgId)
                 .map(longUrl -> {
                     clickEventPublisher.publish(buildClickEvent(code, request));
                     return ResponseEntity.status(HttpStatus.FOUND)

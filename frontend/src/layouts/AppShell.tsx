@@ -19,6 +19,9 @@ export function AppShell() {
             <Link to="/analytics" className="hover:text-foreground">
               Analytics
             </Link>
+            <Link to="/domains" className="hover:text-foreground">
+              Domains
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-4">
