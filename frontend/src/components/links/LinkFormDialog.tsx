@@ -29,6 +29,9 @@ export function LinkFormDialog({ open, onOpenChange, link, folders }: LinkFormDi
   const [customAlias, setCustomAlias] = useState("");
   const [folderId, setFolderId] = useState("");
   const [tags, setTags] = useState("");
+  const [startsAt, setStartsAt] = useState("");
+  const [password, setPassword] = useState("");
+  const [removePassword, setRemovePassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,6 +40,9 @@ export function LinkFormDialog({ open, onOpenChange, link, folders }: LinkFormDi
       setCustomAlias("");
       setFolderId("");
       setTags(link?.tags.join(", ") ?? "");
+      setStartsAt(link?.startsAt ? link.startsAt.slice(0, 16) : "");
+      setPassword("");
+      setRemovePassword(false);
       setError(null);
     }
   }, [open, link]);
@@ -48,16 +54,24 @@ export function LinkFormDialog({ open, onOpenChange, link, folders }: LinkFormDi
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
       const parsedFolderId = folderId ? Number(folderId) : undefined;
+      const parsedStartsAt = startsAt ? new Date(startsAt).toISOString() : undefined;
 
       if (isEditMode && link) {
         return updateUrl(link.shortCode, {
           longUrl,
           folderId: parsedFolderId,
           tags: parsedTags,
+          startsAt: parsedStartsAt,
+          password: removePassword ? "" : password || undefined,
         });
       }
 
-      const created = await shortenUrl({ longUrl, customAlias: customAlias || undefined });
+      const created = await shortenUrl({
+        longUrl,
+        customAlias: customAlias || undefined,
+        startsAt: parsedStartsAt,
+        password: password || undefined,
+      });
       if (parsedFolderId !== undefined || parsedTags.length > 0) {
         await updateUrl(created.shortCode, { folderId: parsedFolderId, tags: parsedTags });
       }
@@ -133,6 +147,41 @@ export function LinkFormDialog({ open, onOpenChange, link, folders }: LinkFormDi
             <div className="space-y-2">
               <Label htmlFor="tags">Tags (comma-separated)</Label>
               <Input id="tags" placeholder="launch, social" value={tags} onChange={(e) => setTags(e.target.value)} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="startsAt">Activate at (optional)</Label>
+              <Input
+                id="startsAt"
+                type="datetime-local"
+                value={startsAt}
+                onChange={(e) => setStartsAt(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">The link returns 404 until this time. Leave blank to activate immediately.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">
+                {isEditMode && link?.passwordProtected ? "New password (optional)" : "Password protection (optional)"}
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Leave blank for no password"
+                value={password}
+                disabled={removePassword}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {isEditMode && link?.passwordProtected && (
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={removePassword}
+                    onChange={(e) => setRemovePassword(e.target.checked)}
+                  />
+                  Remove password protection
+                </label>
+              )}
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

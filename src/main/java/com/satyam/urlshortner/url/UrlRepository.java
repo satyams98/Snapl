@@ -26,6 +26,7 @@ public interface UrlRepository extends ReactiveCrudRepository<UrlEntity, Long> {
     Mono<Integer> updateFolderByShortCodeAndOrgId(String shortCode, Long orgId, Long folderId);
 
     @Modifying
-    @Query("UPDATE urls SET long_url = :longUrl, long_url_hash = :longUrlHash, expires_at = :expiresAt, folder_id = :folderId WHERE short_code = :shortCode AND org_id = :orgId")
-    Mono<Integer> updateDetails(String shortCode, Long orgId, String longUrl, String longUrlHash, Instant expiresAt, Long folderId);
+    @Query("UPDATE urls SET long_url = :longUrl, long_url_hash = :longUrlHash, expires_at = :expiresAt, folder_id = :folderId, starts_at = :startsAt, password_hash = :passwordHash WHERE short_code = :shortCode AND org_id = :orgId")
+    Mono<Integer> updateDetails(String shortCode, Long orgId, String longUrl, String longUrlHash, Instant expiresAt,
+                                 Long folderId, Instant startsAt, String passwordHash);
 }

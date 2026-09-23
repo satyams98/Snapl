@@ -11,5 +11,7 @@ public record UrlSummaryResponse(
         Instant expiresAt,
         boolean disabled,
         String folderName,
-        List<String> tags
+        List<String> tags,
+        Instant startsAt,
+        boolean passwordProtected
 ) {}

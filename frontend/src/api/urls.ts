@@ -9,6 +9,8 @@ export interface UrlSummary {
   disabled: boolean;
   folderName: string | null;
   tags: string[];
+  startsAt: string | null;
+  passwordProtected: boolean;
 }
 
 export interface UrlListResponse {
@@ -42,11 +44,15 @@ export interface UpdateUrlPayload {
   expiresAt?: string;
   folderId?: number;
   tags?: string[];
+  startsAt?: string;
+  password?: string;
 }
 
 export interface ShortenPayload {
   longUrl: string;
   customAlias?: string;
+  startsAt?: string;
+  password?: string;
 }
 
 export interface BulkActionPayload {
@@ -96,6 +102,13 @@ export function shortenUrl(payload: ShortenPayload): Promise<{ shortCode: string
 
 export function disableUrl(shortCode: string): Promise<void> {
   return apiFetch(`/${shortCode}`, { method: "DELETE" });
+}
+
+export function unlockLink(shortCode: string, password: string): Promise<{ longUrl: string }> {
+  return apiFetch<{ longUrl: string }>(`/${shortCode}/unlock`, {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
 }
 
 export function bulkAction(payload: BulkActionPayload): Promise<BulkActionResult> {

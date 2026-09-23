@@ -101,7 +101,7 @@ class UrlBulkActionServiceTest {
     @Test
     void addTagsResolvesTagsAndAssignsToEachUrl() {
         Tag tag = new Tag(9L, ORG_ID, "campaign", Instant.now());
-        UrlEntity entity = new UrlEntity(1L, "a", "https://example.com", "hash", Instant.now(), null, false, null, ORG_ID, null);
+        UrlEntity entity = new UrlEntity(1L, "a", "https://example.com", "hash", Instant.now(), null, false, null, ORG_ID, null, null, null);
 
         when(tagService.resolveOrCreate(ORG_ID, List.of("campaign"))).thenReturn(Flux.just(tag));
         when(urlRepository.findByShortCodeAndOrgId("a", ORG_ID)).thenReturn(Mono.just(entity));

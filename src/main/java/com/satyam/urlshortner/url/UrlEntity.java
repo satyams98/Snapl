@@ -44,6 +44,12 @@ public class UrlEntity implements Persistable<Long> {
     @Column("folder_id")
     private Long folderId;
 
+    @Column("starts_at")
+    private Instant startsAt;
+
+    @Column("password_hash")
+    private String passwordHash;
+
     @Override
     public boolean isNew() {
         return true; // we only ever construct new rows this weekend — no update path exists yet

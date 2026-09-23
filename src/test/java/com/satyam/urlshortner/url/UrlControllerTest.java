@@ -77,7 +77,7 @@ class UrlControllerTest {
     @Test
     void shortenReturnsOkWithBody() {
         ShortenResponse response = new ShortenResponse("abc123", "http://localhost:8080/abc123", "https://example.com");
-        when(urlService.shorten(anyString(), any(), eq(1L))).thenReturn(Mono.just(response));
+        when(urlService.shorten(anyString(), any(), eq(1L), any(), any())).thenReturn(Mono.just(response));
 
         authenticatedClient.post().uri("/shorten")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -103,7 +103,7 @@ class UrlControllerTest {
 
     @Test
     void redirectReturns302AndPublishesClickEvent() {
-        when(urlService.resolve("abc123", null)).thenReturn(Mono.just("https://example.com"));
+        when(urlService.resolve("abc123", null)).thenReturn(Mono.just(new ResolvedLink("https://example.com", false)));
 
         webTestClient.get().uri("/abc123")
                 .exchange()
@@ -111,6 +111,18 @@ class UrlControllerTest {
                 .expectHeader().valueEquals("Location", "https://example.com");
 
         verify(clickEventPublisher).publish(any());
+    }
+
+    @Test
+    void redirectForPasswordProtectedLinkGoesToUnlockPageWithoutPublishingClick() {
+        when(urlService.resolve("locked1", null)).thenReturn(Mono.just(new ResolvedLink("https://example.com", true)));
+
+        webTestClient.get().uri("/locked1")
+                .exchange()
+                .expectStatus().isFound()
+                .expectHeader().valueEquals("Location", "http://localhost:5173/unlock/locked1");
+
+        verifyNoInteractions(clickEventPublisher);
     }
 
     @Test
@@ -122,6 +134,34 @@ class UrlControllerTest {
                 .expectStatus().isNotFound();
 
         verifyNoInteractions(clickEventPublisher);
+    }
+
+    @Test
+    void unlockReturnsLongUrlAndPublishesClickOnSuccess() {
+        when(urlService.unlock("locked1", "secret")).thenReturn(Mono.just("https://example.com"));
+
+        webTestClient.post().uri("/locked1/unlock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"password":"secret"}""")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.longUrl").isEqualTo("https://example.com");
+
+        verify(clickEventPublisher).publish(any());
+    }
+
+    @Test
+    void unlockReturns401ForWrongPassword() {
+        when(urlService.unlock("locked1", "wrong")).thenReturn(Mono.error(new WrongPasswordException("locked1")));
+
+        webTestClient.post().uri("/locked1/unlock")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"password":"wrong"}""")
+                .exchange()
+                .expectStatus().isUnauthorized();
     }
 
     @Test

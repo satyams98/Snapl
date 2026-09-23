@@ -10,6 +10,7 @@ import LinkDetailPage from "@/pages/LinkDetailPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import DomainsPage from "@/pages/DomainsPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
+import UnlockPage from "@/pages/UnlockPage";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/unlock/:code" element={<UnlockPage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
                 <Route index element={<LinksPage />} />

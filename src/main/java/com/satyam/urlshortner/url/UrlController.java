@@ -7,6 +7,7 @@ import com.satyam.urlshortner.auth.InsufficientScopeException;
 import com.satyam.urlshortner.domain.DomainResolutionFilter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +25,14 @@ public class UrlController {
     private final UrlService urlService;
     private final ClickEventPublisher clickEventPublisher;
 
+    @Value("${app.frontend.origin}")
+    private String frontendOrigin;
+
     @PostMapping("/shorten")
     public Mono<ResponseEntity<ShortenResponse>> shorten(@Valid @RequestBody ShortenRequest request) {
         return CurrentUser.get()
                 .flatMap(principal -> principal.hasWriteAccess()
-                        ? urlService.shorten(request.longUrl(), request.customAlias(), principal.orgId())
+                        ? urlService.shorten(request.longUrl(), request.customAlias(), principal.orgId(), request.startsAt(), request.password())
                         : Mono.error(new InsufficientScopeException()))
                 .map(ResponseEntity::ok);
     }
@@ -37,14 +41,31 @@ public class UrlController {
     public Mono<ResponseEntity<Void>> redirect(@PathVariable String code, ServerHttpRequest request, ServerWebExchange exchange) {
         Long restrictToOrgId = exchange.getAttribute(DomainResolutionFilter.RESOLVED_ORG_ID_ATTRIBUTE);
         return urlService.resolve(code, restrictToOrgId)
-                .map(longUrl -> {
+                .map(resolved -> {
+                    if (resolved.passwordProtected()) {
+                        // The actual click is counted once the visitor successfully unlocks the link, not here.
+                        return ResponseEntity.status(HttpStatus.FOUND)
+                                .header(HttpHeaders.LOCATION, frontendOrigin + "/unlock/" + code)
+                                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                                .<Void>build();
+                    }
                     clickEventPublisher.publish(buildClickEvent(code, request));
                     return ResponseEntity.status(HttpStatus.FOUND)
-                            .header(HttpHeaders.LOCATION, longUrl)
+                            .header(HttpHeaders.LOCATION, resolved.longUrl())
                             .header(HttpHeaders.CACHE_CONTROL, "no-store")
                             .<Void>build();
                 })
                 .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{code}/unlock")
+    public Mono<ResponseEntity<UnlockResponse>> unlock(@PathVariable String code, @Valid @RequestBody UnlockRequest request,
+                                                        ServerHttpRequest httpRequest) {
+        return urlService.unlock(code, request.password())
+                .map(longUrl -> {
+                    clickEventPublisher.publish(buildClickEvent(code, httpRequest));
+                    return ResponseEntity.ok(new UnlockResponse(longUrl));
+                });
     }
 
     @DeleteMapping("/{code}")

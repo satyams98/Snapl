@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,6 +24,8 @@ public class UrlQueryService {
     private final TagRepository tagRepository;
     private final TagAssignmentDao tagAssignmentDao;
     private final TagService tagService;
+    private final UrlService urlService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -78,6 +81,7 @@ public class UrlQueryService {
                 .switchIfEmpty(Mono.error(new ShortUrlNotFoundException(shortCode)))
                 .flatMap(existing -> applyUpdate(orgId, shortCode, existing, request))
                 .then(assignTagsIfPresent(orgId, shortCode, request.tags()))
+                .then(urlService.evictCache(shortCode))
                 .then(getDetail(orgId, shortCode));
     }
 
@@ -86,7 +90,17 @@ public class UrlQueryService {
         String longUrlHash = request.longUrl() != null ? UrlHasher.sha256Hex(request.longUrl()) : existing.getLongUrlHash();
         var expiresAt = request.expiresAt() != null ? request.expiresAt() : existing.getExpiresAt();
         var folderId = request.folderId() != null ? request.folderId() : existing.getFolderId();
-        return urlRepository.updateDetails(shortCode, orgId, longUrl, longUrlHash, expiresAt, folderId);
+        var startsAt = request.startsAt() != null ? request.startsAt() : existing.getStartsAt();
+        var passwordHash = mergePassword(request.password(), existing.getPasswordHash());
+        return urlRepository.updateDetails(shortCode, orgId, longUrl, longUrlHash, expiresAt, folderId, startsAt, passwordHash);
+    }
+
+    // null = leave unchanged, empty string = clear the password, anything else = set a new password.
+    private String mergePassword(String requestedPassword, String existingHash) {
+        if (requestedPassword == null) {
+            return existingHash;
+        }
+        return requestedPassword.isEmpty() ? null : passwordEncoder.encode(requestedPassword);
     }
 
     private Mono<Void> assignTagsIfPresent(Long orgId, String shortCode, List<String> tags) {
@@ -119,6 +133,8 @@ public class UrlQueryService {
                         entity.getExpiresAt(),
                         entity.getDisabledAt() != null,
                         t.getT1().isEmpty() ? null : t.getT1(),
-                        t.getT2()));
+                        t.getT2(),
+                        entity.getStartsAt(),
+                        entity.getPasswordHash() != null));
     }
 }

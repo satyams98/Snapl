@@ -198,9 +198,13 @@ export default function LinksPage() {
                   </div>
                 </td>
                 <td className="px-4 py-3 align-top">
-                  <Badge variant={item.disabled ? "destructive" : "default"}>
-                    {item.disabled ? "Disabled" : "Active"}
-                  </Badge>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant={item.disabled ? "destructive" : "default"}>
+                      {item.disabled ? "Disabled" : "Active"}
+                    </Badge>
+                    {item.passwordProtected && <Badge variant="outline">Password</Badge>}
+                    {item.startsAt && new Date(item.startsAt) > new Date() && <Badge variant="outline">Scheduled</Badge>}
+                  </div>
                 </td>
                 <td className="px-4 py-3 align-top text-right">
                   <Button size="sm" variant="ghost" asChild>

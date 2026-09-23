@@ -165,4 +165,13 @@ public class GlobalExceptionHandler {
         pd.setDetail(ex.getMessage());
         return pd;
     }
+
+    @ExceptionHandler(WrongPasswordException.class)
+    public ProblemDetail handleWrongPassword(WrongPasswordException ex) {
+        log.warn("Unlock failed: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        pd.setTitle("Incorrect Password");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
 }

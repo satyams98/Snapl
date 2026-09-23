@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,6 +37,10 @@ class UrlQueryServiceTest {
     private TagAssignmentDao tagAssignmentDao;
     @Mock
     private TagService tagService;
+    @Mock
+    private UrlService urlService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     private UrlQueryService urlQueryService;
 
@@ -43,13 +48,13 @@ class UrlQueryServiceTest {
 
     @BeforeEach
     void setUp() {
-        urlQueryService = new UrlQueryService(entityTemplate, urlRepository, folderRepository, tagRepository, tagAssignmentDao, tagService);
+        urlQueryService = new UrlQueryService(entityTemplate, urlRepository, folderRepository, tagRepository, tagAssignmentDao, tagService, urlService, passwordEncoder);
         ReflectionTestUtils.setField(urlQueryService, "baseUrl", "http://localhost:8080");
     }
 
     @Test
     void listReturnsSummariesWithFolderAndTags() {
-        UrlEntity entity = new UrlEntity(1L, "abc123", "https://example.com", "hash", Instant.now(), null, false, null, ORG_ID, 7L);
+        UrlEntity entity = new UrlEntity(1L, "abc123", "https://example.com", "hash", Instant.now(), null, false, null, ORG_ID, 7L, null, null);
 
         when(entityTemplate.select(any(Query.class), eq(UrlEntity.class))).thenReturn(Flux.just(entity));
         when(entityTemplate.count(any(Query.class), eq(UrlEntity.class))).thenReturn(Mono.just(1L));
@@ -77,13 +82,14 @@ class UrlQueryServiceTest {
 
     @Test
     void updateAppliesOnlyProvidedFieldsAndLeavesOthersUnchanged() {
-        UrlEntity existing = new UrlEntity(1L, "abc123", "https://old.example.com", "oldhash", Instant.now(), null, false, null, ORG_ID, null);
-        UpdateUrlRequest request = new UpdateUrlRequest(null, null, 3L, null);
+        UrlEntity existing = new UrlEntity(1L, "abc123", "https://old.example.com", "oldhash", Instant.now(), null, false, null, ORG_ID, null, null, null);
+        UpdateUrlRequest request = new UpdateUrlRequest(null, null, 3L, null, null, null);
 
         when(urlRepository.findByShortCodeAndOrgId("abc123", ORG_ID)).thenReturn(Mono.just(existing));
-        when(urlRepository.updateDetails(eq("abc123"), eq(ORG_ID), eq("https://old.example.com"), eq("oldhash"), isNull(), eq(3L)))
+        when(urlRepository.updateDetails(eq("abc123"), eq(ORG_ID), eq("https://old.example.com"), eq("oldhash"), isNull(), eq(3L), isNull(), isNull()))
                 .thenReturn(Mono.just(1));
         when(tagAssignmentDao.findTagNamesForUrl(1L)).thenReturn(Flux.empty());
+        when(urlService.evictCache("abc123")).thenReturn(Mono.empty());
 
         StepVerifier.create(urlQueryService.update(ORG_ID, "abc123", request))
                 .assertNext(response -> assertEquals(List.of(), response.tags()))

@@ -68,6 +68,16 @@ export default function LinkDetailPage() {
                   <Badge variant={link.disabled ? "destructive" : "default"}>
                     {link.disabled ? "Disabled" : "Active"}
                   </Badge>
+                  {link.passwordProtected && (
+                    <Badge variant="outline" className="ml-2">
+                      Password protected
+                    </Badge>
+                  )}
+                  {link.startsAt && new Date(link.startsAt) > new Date() && (
+                    <Badge variant="outline" className="ml-2">
+                      Scheduled for {new Date(link.startsAt).toLocaleString()}
+                    </Badge>
+                  )}
                 </p>
                 <p>
                   <span className="text-muted-foreground">Folder: </span>
