@@ -23,7 +23,7 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     try {
       await register(email, password, name, organizationName);
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Unable to create your account. Please try again.");
     } finally {

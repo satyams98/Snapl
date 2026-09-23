@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppShell } from "@/layouts/AppShell";
+import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -22,13 +23,14 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/unlock/:code" element={<UnlockPage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
                 <Route path="dashboard" element={<DashboardPage />} />
-                <Route index element={<LinksPage />} />
+                <Route path="links" element={<LinksPage />} />
                 <Route path="links/:code" element={<LinkDetailPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="domains" element={<DomainsPage />} />
@@ -45,4 +47,3 @@ function App() {
 }
 
 export default App;
-
