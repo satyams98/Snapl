@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppShell } from "@/layouts/AppShell";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
+import DashboardPage from "@/pages/DashboardPage";
 import LinksPage from "@/pages/LinksPage";
 import LinkDetailPage from "@/pages/LinkDetailPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
@@ -26,6 +27,7 @@ function App() {
             <Route path="/unlock/:code" element={<UnlockPage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
+                <Route path="dashboard" element={<DashboardPage />} />
                 <Route index element={<LinksPage />} />
                 <Route path="links/:code" element={<LinkDetailPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
