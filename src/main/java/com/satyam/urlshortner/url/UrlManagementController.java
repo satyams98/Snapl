@@ -1,5 +1,7 @@
 package com.satyam.urlshortner.url;
 
+import com.satyam.urlshortner.analytics.AnalyticsQueryService;
+import com.satyam.urlshortner.analytics.LinkAnalyticsResponse;
 import com.satyam.urlshortner.auth.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ public class UrlManagementController {
 
     private final UrlQueryService urlQueryService;
     private final UrlBulkActionService urlBulkActionService;
+    private final AnalyticsQueryService analyticsQueryService;
 
     @GetMapping
     public Mono<UrlListResponse> list(
@@ -35,6 +38,11 @@ public class UrlManagementController {
     @PatchMapping("/{code}")
     public Mono<UrlSummaryResponse> update(@PathVariable String code, @Valid @RequestBody UpdateUrlRequest request) {
         return CurrentUser.get().flatMap(principal -> urlQueryService.update(principal.orgId(), code, request));
+    }
+
+    @GetMapping("/{code}/analytics")
+    public Mono<LinkAnalyticsResponse> analytics(@PathVariable String code, @RequestParam(defaultValue = "30") int days) {
+        return CurrentUser.get().flatMap(principal -> analyticsQueryService.getLinkAnalytics(principal.orgId(), code, days));
     }
 
     @PostMapping("/bulk")

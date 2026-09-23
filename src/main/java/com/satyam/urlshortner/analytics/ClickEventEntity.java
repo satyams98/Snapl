@@ -31,4 +31,19 @@ public class ClickEventEntity {
     private String userAgent;
 
     private String referrer;
+
+    @Column("device_type")
+    private String deviceType;
+
+    @Column("browser")
+    private String browser;
+
+    @Column("os")
+    private String os;
+
+    @Column("country")
+    private String country;
+
+    @Column("city")
+    private String city;
 }

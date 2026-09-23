@@ -6,6 +6,8 @@ import { AppShell } from "@/layouts/AppShell";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import LinksPage from "@/pages/LinksPage";
+import LinkDetailPage from "@/pages/LinkDetailPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,8 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
                 <Route index element={<LinksPage />} />
+                <Route path="links/:code" element={<LinkDetailPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

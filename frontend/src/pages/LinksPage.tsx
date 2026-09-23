@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -202,6 +203,9 @@ export default function LinksPage() {
                   </Badge>
                 </td>
                 <td className="px-4 py-3 align-top text-right">
+                  <Button size="sm" variant="ghost" asChild>
+                    <Link to={`/links/${item.shortCode}`}>View</Link>
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => openEditDialog(item)}>
                     Edit
                   </Button>

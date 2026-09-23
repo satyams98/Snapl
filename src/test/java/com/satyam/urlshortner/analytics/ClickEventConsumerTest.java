@@ -10,9 +10,12 @@ import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,18 +26,22 @@ class ClickEventConsumerTest {
     @Mock
     private ClickEventRepository repository;
 
+    @Mock
+    private ClickDailyStatsRepository dailyStatsRepository;
+
     private ClickEventConsumer consumer;
 
     @BeforeEach
     void setUp() {
-        consumer = new ClickEventConsumer(repository);
+        consumer = new ClickEventConsumer(repository, dailyStatsRepository);
     }
 
     @Test
-    void onClickEventPersistsEntityMappedFromMessage() {
+    void onClickEventPersistsEntityMappedFromMessageAndIncrementsDailyStats() {
         Instant now = Instant.now();
-        ClickEvent event = new ClickEvent("abc123", now, "127.0.0.1", "curl/8.0", "https://referrer.example.com");
+        ClickEvent event = new ClickEvent("abc123", now, "127.0.0.1", "Mozilla/5.0 (Windows NT 10.0) Chrome/120.0 Safari/537.36", "https://referrer.example.com");
         when(repository.save(any(ClickEventEntity.class))).thenReturn(Mono.just(new ClickEventEntity()));
+        when(dailyStatsRepository.increment(anyString(), any(LocalDate.class))).thenReturn(Mono.just(1));
 
         consumer.onClickEvent(JSON_MAPPER.writeValueAsString(event));
 
@@ -44,8 +51,12 @@ class ClickEventConsumerTest {
         assertEquals("abc123", saved.getShortCode());
         assertEquals(now, saved.getClickedAt());
         assertEquals("127.0.0.1", saved.getIpAddress());
-        assertEquals("curl/8.0", saved.getUserAgent());
         assertEquals("https://referrer.example.com", saved.getReferrer());
+        assertEquals("Desktop", saved.getDeviceType());
+        assertEquals("Chrome", saved.getBrowser());
+        assertEquals("Windows", saved.getOs());
+
+        verify(dailyStatsRepository).increment("abc123", now.atZone(ZoneOffset.UTC).toLocalDate());
     }
 
     @Test
