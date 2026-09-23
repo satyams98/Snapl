@@ -87,7 +87,7 @@ export default function LinksPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Links</h1>
+        <h1 className="text-h3 font-medium">Links</h1>
         <Button onClick={openCreateDialog}>New link</Button>
       </div>
 
@@ -200,7 +200,7 @@ export default function LinksPage() {
                 </td>
                 <td className="px-4 py-3 align-top">
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant={item.disabled ? "destructive" : "default"}>
+                    <Badge variant={item.disabled ? "destructive" : "success"}>
                       {item.disabled ? "Disabled" : "Active"}
                     </Badge>
                     {item.passwordProtected && <Badge variant="outline">Password</Badge>}

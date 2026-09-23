@@ -27,7 +27,7 @@ export default function LinkDetailPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold">{code}</h1>
+        <h1 className="text-h3 font-medium">{code}</h1>
         {link && <p className="text-sm text-muted-foreground">{link.longUrl}</p>}
       </div>
 
@@ -65,7 +65,7 @@ export default function LinkDetailPage() {
                 </p>
                 <p>
                   <span className="text-muted-foreground">Status: </span>
-                  <Badge variant={link.disabled ? "destructive" : "default"}>
+                  <Badge variant={link.disabled ? "destructive" : "success"}>
                     {link.disabled ? "Disabled" : "Active"}
                   </Badge>
                   {link.passwordProtected && (

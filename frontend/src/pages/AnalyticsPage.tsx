@@ -9,19 +9,19 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Analytics</h1>
+      <h1 className="text-h3 font-medium">Analytics</h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <CardDescription>Total clicks (all time)</CardDescription>
-            <CardTitle className="text-3xl">{data?.totalClicks ?? "—"}</CardTitle>
+            <CardTitle className="text-h4">{data?.totalClicks ?? "—"}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader>
             <CardDescription>Active links</CardDescription>
-            <CardTitle className="text-3xl">{data?.totalLinks ?? "—"}</CardTitle>
+            <CardTitle className="text-h4">{data?.totalLinks ?? "—"}</CardTitle>
           </CardHeader>
         </Card>
       </div>
