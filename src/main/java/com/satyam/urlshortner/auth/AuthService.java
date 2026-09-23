@@ -1,5 +1,6 @@
 package com.satyam.urlshortner.auth;
 
+import com.satyam.urlshortner.billing.SubscriptionService;
 import com.satyam.urlshortner.org.Membership;
 import com.satyam.urlshortner.org.MembershipRepository;
 import com.satyam.urlshortner.org.Organization;
@@ -27,12 +28,14 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final SubscriptionService subscriptionService;
 
     public Mono<AuthResult> register(RegisterRequest request) {
         return userRepository.existsByEmail(request.email())
                 .flatMap(exists -> exists
                         ? Mono.error(new EmailAlreadyRegisteredException(request.email()))
                         : createOrganization(request.organizationName()))
+                .flatMap(org -> subscriptionService.createDefaultSubscription(org.getId()).thenReturn(org))
                 .flatMap(org -> createUser(request).flatMap(user -> createMembership(user, org, Role.OWNER)
                         .flatMap(membership -> issueTokens(user, membership, org))));
     }

@@ -6,6 +6,13 @@ import com.satyam.urlshortner.auth.InvalidCredentialsException;
 import com.satyam.urlshortner.auth.InvalidTokenException;
 import com.satyam.urlshortner.auth.NoOrganizationMembershipException;
 import com.satyam.urlshortner.apikey.ApiKeyNotFoundException;
+import com.satyam.urlshortner.billing.InvalidStripeWebhookSignatureException;
+import com.satyam.urlshortner.billing.NoSubscriptionException;
+import com.satyam.urlshortner.billing.PlanFeatureNotAvailableException;
+import com.satyam.urlshortner.billing.PlanLimitExceededException;
+import com.satyam.urlshortner.billing.PlanNotFoundException;
+import com.satyam.urlshortner.billing.StripeNotConfiguredException;
+import com.satyam.urlshortner.billing.StripePriceNotConfiguredException;
 import com.satyam.urlshortner.domain.DomainAlreadyExistsException;
 import com.satyam.urlshortner.domain.DomainNotFoundException;
 import com.satyam.urlshortner.domain.DomainVerificationFailedException;
@@ -171,6 +178,42 @@ public class GlobalExceptionHandler {
         log.warn("Unlock failed: {}", ex.getMessage());
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
         pd.setTitle("Incorrect Password");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler({PlanLimitExceededException.class, PlanFeatureNotAvailableException.class})
+    public ProblemDetail handlePlanLimitExceeded(RuntimeException ex) {
+        log.warn("Plan limit exceeded: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.PAYMENT_REQUIRED);
+        pd.setTitle("Plan Limit Reached");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler({NoSubscriptionException.class, PlanNotFoundException.class})
+    public ProblemDetail handleBillingNotFound(RuntimeException ex) {
+        log.warn("Billing resource not found: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Not Found");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler({StripeNotConfiguredException.class, StripePriceNotConfiguredException.class})
+    public ProblemDetail handleStripeNotConfigured(RuntimeException ex) {
+        log.warn("Stripe not configured: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_IMPLEMENTED);
+        pd.setTitle("Billing Not Configured");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(InvalidStripeWebhookSignatureException.class)
+    public ProblemDetail handleInvalidStripeSignature(InvalidStripeWebhookSignatureException ex) {
+        log.warn("Invalid Stripe webhook signature: {}", ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setTitle("Invalid Webhook Signature");
         pd.setDetail(ex.getMessage());
         return pd;
     }

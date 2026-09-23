@@ -25,6 +25,9 @@ export function AppShell() {
             <Link to="/api-keys" className="hover:text-foreground">
               API Keys
             </Link>
+            <Link to="/billing" className="hover:text-foreground">
+              Billing
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-4">

@@ -11,6 +11,7 @@ import AnalyticsPage from "@/pages/AnalyticsPage";
 import DomainsPage from "@/pages/DomainsPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
 import UnlockPage from "@/pages/UnlockPage";
+import BillingPage from "@/pages/BillingPage";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ function App() {
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="domains" element={<DomainsPage />} />
                 <Route path="api-keys" element={<ApiKeysPage />} />
+                <Route path="billing" element={<BillingPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

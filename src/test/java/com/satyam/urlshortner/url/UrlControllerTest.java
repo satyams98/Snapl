@@ -10,6 +10,7 @@ import com.satyam.urlshortner.auth.BearerTokenAuthenticationConverter;
 import com.satyam.urlshortner.auth.JwtAuthenticationManager;
 import com.satyam.urlshortner.auth.JwtService;
 import com.satyam.urlshortner.auth.SecurityConfig;
+import com.satyam.urlshortner.billing.PlanLimitEnforcer;
 import com.satyam.urlshortner.domain.CustomDomainRepository;
 import com.satyam.urlshortner.org.Role;
 import com.satyam.urlshortner.ratelimit.TokenBucketRateLimiter;
@@ -26,6 +27,7 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -64,12 +66,16 @@ class UrlControllerTest {
     @MockitoBean
     private ApiKeyRepository apiKeyRepository;
 
+    @MockitoBean
+    private PlanLimitEnforcer planLimitEnforcer;
+
     private WebTestClient authenticatedClient;
 
     @BeforeEach
     void allowAllRequests() {
         when(tokenBucketRateLimiter.tryConsume(anyString())).thenReturn(Mono.just(true));
         when(customDomainRepository.findByDomainAndVerifiedAtIsNotNull(anyString())).thenReturn(Mono.empty());
+        when(planLimitEnforcer.checkCanCreateLink(anyLong())).thenReturn(Mono.empty());
         String token = jwtService.issueAccessToken(PRINCIPAL);
         authenticatedClient = webTestClient.mutate().defaultHeader("Authorization", "Bearer " + token).build();
     }

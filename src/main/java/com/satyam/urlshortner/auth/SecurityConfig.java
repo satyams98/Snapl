@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout").permitAll()
+                        .pathMatchers(HttpMethod.POST, "/api/billing/webhook").permitAll()
                         .pathMatchers(HttpMethod.POST, "/*/unlock").permitAll()
                         .pathMatchers(HttpMethod.GET, "/*", "/actuator/**").permitAll()
                         .anyExchange().authenticated())

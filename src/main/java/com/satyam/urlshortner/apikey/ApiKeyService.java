@@ -1,6 +1,7 @@
 package com.satyam.urlshortner.apikey;
 
 import com.satyam.urlshortner.auth.AuthPrincipal;
+import com.satyam.urlshortner.billing.PlanLimitEnforcer;
 import com.satyam.urlshortner.org.AccessDeniedForRoleException;
 import com.satyam.urlshortner.org.Role;
 import com.satyam.urlshortner.url.UrlHasher;
@@ -25,6 +26,7 @@ public class ApiKeyService {
     private static final String KEY_PREFIX = "usk_";
 
     private final ApiKeyRepository apiKeyRepository;
+    private final PlanLimitEnforcer planLimitEnforcer;
 
     public Flux<ApiKeyResponse> list(AuthPrincipal principal) {
         return apiKeyRepository.findByOrgIdOrderByCreatedAtDesc(principal.orgId()).map(ApiKeyResponse::from);
@@ -32,6 +34,7 @@ public class ApiKeyService {
 
     public Mono<ApiKeyCreatedResponse> create(AuthPrincipal principal, CreateApiKeyRequest request) {
         return requireManagerRole(principal)
+                .then(Mono.defer(() -> planLimitEnforcer.checkApiAccessAllowed(principal.orgId())))
                 .then(Mono.defer(() -> {
                     String rawKey = generateRawKey();
                     String scopes = request.scopes().stream().map(Enum::name).collect(Collectors.joining(","));

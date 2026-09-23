@@ -16,6 +16,8 @@ public interface UrlRepository extends ReactiveCrudRepository<UrlEntity, Long> {
 
     Mono<UrlEntity> findFirstByLongUrlHashAndOrgId(String longUrlHash, Long orgId);
 
+    Mono<Long> countByOrgIdAndDisabledAtIsNull(Long orgId);
+
     // Direct update avoids the insert-vs-update ambiguity from UrlEntity's Persistable.isNew()==true override.
     @Modifying
     @Query("UPDATE urls SET disabled_at = :disabledAt WHERE short_code = :shortCode AND org_id = :orgId AND disabled_at IS NULL")

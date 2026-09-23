@@ -15,6 +15,8 @@ public interface CustomDomainRepository extends ReactiveCrudRepository<CustomDom
 
     Mono<Boolean> existsByDomain(String domain);
 
+    Mono<Long> countByOrgId(Long orgId);
+
     // Only verified domains may resolve redirects on behalf of an org.
     Mono<CustomDomain> findByDomainAndVerifiedAtIsNotNull(String domain);
 

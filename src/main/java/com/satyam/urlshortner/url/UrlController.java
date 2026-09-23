@@ -4,6 +4,7 @@ import com.satyam.urlshortner.analytics.ClickEvent;
 import com.satyam.urlshortner.analytics.ClickEventPublisher;
 import com.satyam.urlshortner.auth.CurrentUser;
 import com.satyam.urlshortner.auth.InsufficientScopeException;
+import com.satyam.urlshortner.billing.PlanLimitEnforcer;
 import com.satyam.urlshortner.domain.DomainResolutionFilter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class UrlController {
 
     private final UrlService urlService;
     private final ClickEventPublisher clickEventPublisher;
+    private final PlanLimitEnforcer planLimitEnforcer;
 
     @Value("${app.frontend.origin}")
     private String frontendOrigin;
@@ -32,7 +34,8 @@ public class UrlController {
     public Mono<ResponseEntity<ShortenResponse>> shorten(@Valid @RequestBody ShortenRequest request) {
         return CurrentUser.get()
                 .flatMap(principal -> principal.hasWriteAccess()
-                        ? urlService.shorten(request.longUrl(), request.customAlias(), principal.orgId(), request.startsAt(), request.password())
+                        ? planLimitEnforcer.checkCanCreateLink(principal.orgId())
+                                .then(urlService.shorten(request.longUrl(), request.customAlias(), principal.orgId(), request.startsAt(), request.password()))
                         : Mono.error(new InsufficientScopeException()))
                 .map(ResponseEntity::ok);
     }

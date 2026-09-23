@@ -1,5 +1,7 @@
 package com.satyam.urlshortner.auth;
 
+import com.satyam.urlshortner.billing.Subscription;
+import com.satyam.urlshortner.billing.SubscriptionService;
 import com.satyam.urlshortner.org.Membership;
 import com.satyam.urlshortner.org.MembershipRepository;
 import com.satyam.urlshortner.org.Organization;
@@ -35,6 +37,8 @@ class AuthServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private SubscriptionService subscriptionService;
 
     private AuthService authService;
 
@@ -42,7 +46,7 @@ class AuthServiceTest {
     void setUp() {
         JwtService jwtService = new JwtService(new JwtProperties("unit-test-signing-secret-32-bytes-min!!", 15, 30));
         authService = new AuthService(userRepository, organizationRepository, membershipRepository,
-                refreshTokenRepository, passwordEncoder, jwtService);
+                refreshTokenRepository, passwordEncoder, jwtService, subscriptionService);
     }
 
     @Test
@@ -50,6 +54,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("owner@acme.test")).thenReturn(Mono.just(false));
         when(organizationRepository.existsBySlug("acme")).thenReturn(Mono.just(false));
         when(organizationRepository.save(any())).thenAnswer(inv -> Mono.just(withId(inv.getArgument(0), 10L)));
+        when(subscriptionService.createDefaultSubscription(10L)).thenReturn(Mono.just(mock(Subscription.class)));
         when(passwordEncoder.encode("password123")).thenReturn("hashed");
         when(userRepository.save(any())).thenAnswer(inv -> Mono.just(withId(inv.getArgument(0), 20L)));
         when(membershipRepository.save(any())).thenAnswer(inv -> Mono.just(withId(inv.getArgument(0), 30L)));

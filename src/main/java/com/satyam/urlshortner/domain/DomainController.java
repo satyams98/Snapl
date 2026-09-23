@@ -1,6 +1,7 @@
 package com.satyam.urlshortner.domain;
 
 import com.satyam.urlshortner.auth.CurrentUser;
+import com.satyam.urlshortner.billing.PlanLimitEnforcer;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ public class DomainController {
 
     private final CustomDomainRepository customDomainRepository;
     private final DomainVerificationService domainVerificationService;
+    private final PlanLimitEnforcer planLimitEnforcer;
 
     @GetMapping
     public Flux<DomainResponse> list() {
@@ -29,7 +31,8 @@ public class DomainController {
     @PostMapping
     public Mono<DomainResponse> create(@Valid @RequestBody CreateDomainRequest request) {
         return CurrentUser.get()
-                .flatMap(principal -> customDomainRepository.existsByDomain(request.domain())
+                .flatMap(principal -> planLimitEnforcer.checkCanAddCustomDomain(principal.orgId())
+                        .then(Mono.defer(() -> customDomainRepository.existsByDomain(request.domain())))
                         .flatMap(exists -> exists
                                 ? Mono.error(new DomainAlreadyExistsException(request.domain()))
                                 : customDomainRepository.save(new CustomDomain(null, principal.orgId(), request.domain(),

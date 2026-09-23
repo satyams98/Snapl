@@ -1,6 +1,7 @@
 package com.satyam.urlshortner.apikey;
 
 import com.satyam.urlshortner.auth.AuthPrincipal;
+import com.satyam.urlshortner.billing.PlanLimitEnforcer;
 import com.satyam.urlshortner.org.AccessDeniedForRoleException;
 import com.satyam.urlshortner.org.Role;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,8 @@ class ApiKeyServiceTest {
 
     @Mock
     private ApiKeyRepository apiKeyRepository;
+    @Mock
+    private PlanLimitEnforcer planLimitEnforcer;
 
     private ApiKeyService service;
 
@@ -33,7 +36,7 @@ class ApiKeyServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ApiKeyService(apiKeyRepository);
+        service = new ApiKeyService(apiKeyRepository, planLimitEnforcer);
     }
 
     @Test
@@ -47,6 +50,7 @@ class ApiKeyServiceTest {
 
     @Test
     void createSucceedsForAdminAndReturnsPlaintextKeyOnce() {
+        when(planLimitEnforcer.checkApiAccessAllowed(10L)).thenReturn(Mono.empty());
         when(apiKeyRepository.save(any())).thenAnswer(inv -> {
             ApiKey saved = inv.getArgument(0);
             saved.setId(99L);
