@@ -233,6 +233,42 @@ body {
   font-family: var(--font-sans);
 }
 
+@layer utilities {
+  .text-h1 {
+    @apply text-[2.5rem] leading-[2.75rem];
+  }
+  .text-h2 {
+    @apply text-[2rem] leading-[2.25rem];
+  }
+  .text-h3 {
+    @apply text-[1.75rem] leading-[2rem];
+  }
+  .text-h4 {
+    @apply text-[1.5rem] leading-[1.75rem];
+  }
+  .text-h5 {
+    @apply text-[1.25rem] leading-[1.5rem];
+  }
+  .text-h6 {
+    @apply text-[1.125rem] leading-[1.375rem];
+  }
+  .text-subtitle1 {
+    @apply text-[1rem] leading-[1.25rem];
+  }
+  .text-subtitle2 {
+    @apply text-[0.875rem] leading-[1.125rem];
+  }
+  .text-body1 {
+    @apply text-[1rem] leading-[1.25rem];
+  }
+  .text-body2 {
+    @apply text-[0.875rem] leading-[1.125rem];
+  }
+  .text-caption {
+    @apply text-[0.75rem] leading-[1rem];
+  }
+}
+
 #root {
   min-height: 100svh;
 }
