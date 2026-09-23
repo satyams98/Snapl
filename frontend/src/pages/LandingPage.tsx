@@ -7,12 +7,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DashboardPreviewMockup } from "@/components/marketing/DashboardPreviewMockup";
 
 const FEATURES = [
-  { icon: Globe, title: "Custom domains", description: "Brand every short link with a domain your customers already trust." },
-  { icon: BarChart3, title: "Real-time click analytics", description: "Kafka-backed pipelines stream click events into dashboards you can trust." },
-  { icon: KeyRound, title: "Scoped API keys", description: "Automate link creation with read/write scoped keys built for CI and scripts." },
-  { icon: Users, title: "Team roles", description: "Invite your team with Owner, Admin, and Member roles across one organization." },
-  { icon: Lock, title: "Password-protected & scheduled links", description: "Gate sensitive links with a password, or schedule them to go live later." },
-  { icon: ShieldCheck, title: "Built to scale", description: "Redis-backed rate limiting and deduplication keep things fast under load." },
+  {
+    icon: Globe,
+    title: "Custom domains",
+    description: "Brand every short link with a domain your customers already trust.",
+    tint: "bg-primary-lighter text-primary",
+  },
+  {
+    icon: BarChart3,
+    title: "Real-time click analytics",
+    description: "Kafka-backed pipelines stream click events into dashboards you can trust.",
+    tint: "bg-info-lighter text-info-dark",
+  },
+  {
+    icon: KeyRound,
+    title: "Scoped API keys",
+    description: "Automate link creation with read/write scoped keys built for CI and scripts.",
+    tint: "bg-warning-lighter text-warning-dark",
+  },
+  {
+    icon: Users,
+    title: "Team roles",
+    description: "Invite your team with Owner, Admin, and Member roles across one organization.",
+    tint: "bg-primary-lighter text-primary",
+  },
+  {
+    icon: Lock,
+    title: "Password-protected & scheduled links",
+    description: "Gate sensitive links with a password, or schedule them to go live later.",
+    tint: "bg-success-lighter text-success-dark",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Built to scale",
+    description: "Redis-backed rate limiting and deduplication keep things fast under load.",
+    tint: "bg-info-lighter text-info-dark",
+  },
 ];
 
 const PLANS = [
@@ -92,7 +122,15 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="mx-auto flex max-w-6xl flex-col items-center gap-10 px-4 py-20 lg:flex-row lg:px-6">
+      <section className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px]"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 55% at 50% -5%, var(--primary-lighter), transparent 70%)",
+          }}
+        />
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-10 px-4 py-20 lg:flex-row lg:px-6">
         <div className="flex-1 space-y-6 text-center lg:text-left">
           <h1 className="text-h1 font-medium">Short links, built for teams that scale.</h1>
           <p className="text-body1 text-muted-foreground">
@@ -111,6 +149,7 @@ export default function LandingPage() {
         <div className="flex flex-1 justify-center">
           <DashboardPreviewMockup />
         </div>
+        </div>
       </section>
 
       <section id="features" className="mx-auto max-w-6xl px-4 py-16 lg:px-6">
@@ -120,9 +159,12 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature) => (
-            <Card key={feature.title}>
+            <Card
+              key={feature.title}
+              className="transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+            >
               <CardHeader>
-                <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary-lighter text-primary">
+                <div className={`mb-2 flex size-10 items-center justify-center rounded-lg ${feature.tint}`}>
                   <feature.icon className="size-5" />
                 </div>
                 <CardTitle>{feature.title}</CardTitle>
@@ -159,8 +201,18 @@ export default function LandingPage() {
           {PLANS.map((plan) => (
             <Card
               key={plan.code}
-              className={plan.highlighted ? "border-primary shadow-[var(--shadow-card)] ring-1 ring-primary" : undefined}
+              className={
+                plan.highlighted
+                  ? "relative border-primary ring-1 ring-primary md:-translate-y-2"
+                  : undefined
+              }
+              style={plan.highlighted ? { boxShadow: "0 20px 45px -18px rgba(43,49,133,0.45)" } : undefined}
             >
+              {plan.highlighted && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-caption font-medium text-primary-foreground">
+                  Most popular
+                </span>
+              )}
               <CardHeader>
                 <CardTitle>{plan.name}</CardTitle>
                 <CardDescription>{plan.description}</CardDescription>

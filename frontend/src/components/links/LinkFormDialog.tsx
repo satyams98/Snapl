@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/api/client";
 import { shortenUrl, updateUrl, type Folder, type UrlSummary } from "@/api/urls";
@@ -129,19 +130,14 @@ export function LinkFormDialog({ open, onOpenChange, link, folders }: LinkFormDi
 
             <div className="space-y-2">
               <Label htmlFor="folderId">Folder</Label>
-              <select
-                id="folderId"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={folderId}
-                onChange={(e) => setFolderId(e.target.value)}
-              >
+              <Select id="folderId" className="w-full" value={folderId} onChange={(e) => setFolderId(e.target.value)}>
                 <option value="">No folder</option>
                 {folders.map((folder) => (
                   <option key={folder.id} value={folder.id}>
                     {folder.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="space-y-2">

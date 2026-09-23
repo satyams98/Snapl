@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { LinkFormDialog } from "@/components/links/LinkFormDialog";
@@ -102,27 +103,19 @@ export default function LinksPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"
         />
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as "" | "active" | "disabled")}
-        >
+        <Select value={status} onChange={(e) => setStatus(e.target.value as "" | "active" | "disabled")}>
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="disabled">Disabled</option>
-        </select>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={folderId}
-          onChange={(e) => setFolderId(e.target.value)}
-        >
+        </Select>
+        <Select value={folderId} onChange={(e) => setFolderId(e.target.value)}>
           <option value="">All folders</option>
           {(foldersQuery.data ?? []).map((folder) => (
             <option key={folder.id} value={folder.id}>
               {folder.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {selected.size > 0 && (
@@ -139,8 +132,8 @@ export default function LinksPage() {
         </div>
       )}
 
-      <Card className="overflow-hidden">
-        <table className="w-full text-sm">
+      <Card className="overflow-x-auto">
+        <table className="w-full min-w-[720px] text-sm">
           <thead className="border-b bg-muted/40 text-left text-muted-foreground">
             <tr>
               <th className="w-10 px-4 py-3">
@@ -175,7 +168,7 @@ export default function LinksPage() {
               </tr>
             )}
             {items.map((item) => (
-              <tr key={item.shortCode} className="border-b last:border-b-0">
+              <tr key={item.shortCode} className="border-b last:border-b-0 transition-colors hover:bg-muted/30">
                 <td className="px-4 py-3 align-top">
                   <input
                     type="checkbox"
