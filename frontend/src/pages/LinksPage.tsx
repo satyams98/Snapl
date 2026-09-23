@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,8 @@ import { bulkAction, listFolders, listUrls, type UrlSummary } from "@/api/urls";
 const PAGE_SIZE = 20;
 
 export default function LinksPage() {
-  const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState<"" | "active" | "disabled">("");
   const [folderId, setFolderId] = useState("");
