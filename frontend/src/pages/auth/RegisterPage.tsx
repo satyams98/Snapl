@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Zap } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardPreviewMockup } from "@/components/marketing/DashboardPreviewMockup";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -32,14 +33,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-muted/30 px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Create your business account</CardTitle>
-          <CardDescription>Sets you up as the Owner of a new organization.</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+    <div className="grid min-h-svh lg:grid-cols-2">
+      <div className="flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="space-y-1 text-center lg:text-left">
+            <h1 className="text-h3 font-medium">Create your business account</h1>
+            <p className="text-body2 text-muted-foreground">Sets you up as the Owner of a new organization.</p>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="organizationName">Organization name</Label>
               <Input
@@ -68,21 +69,31 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
+            {error && <p className="text-body2 text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Creating account…" : "Create account"}
             </Button>
-            <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
-                Sign in
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+          </form>
+          <p className="text-center text-body2 text-muted-foreground lg:text-left">
+            Already have an account?{" "}
+            <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+      <div className="hidden flex-col items-center justify-center gap-6 bg-primary-lighter p-12 lg:flex">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Zap className="size-5" />
+          </div>
+          <span className="text-h5 font-medium">Snapl</span>
+        </Link>
+        <p className="max-w-sm text-center text-body1 text-muted-foreground">
+          Join teams shipping branded links with real-time analytics and role-based access.
+        </p>
+        <DashboardPreviewMockup />
+      </div>
     </div>
   );
 }
