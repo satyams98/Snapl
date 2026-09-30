@@ -108,7 +108,7 @@ class AuthServiceTest {
         User user = new User(1L, "owner@acme.test", "hashed", "Owner", Instant.now());
         when(userRepository.findByEmail("owner@acme.test")).thenReturn(Mono.just(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(membershipRepository.findFirstByUserIdOrderByCreatedAtAsc(1L)).thenReturn(Mono.empty());
+        when(membershipRepository.findFirstByUserIdOrderByCreatedAtDesc(1L)).thenReturn(Mono.empty());
 
         StepVerifier.create(authService.login("owner@acme.test", "password123"))
                 .expectError(NoOrganizationMembershipException.class)
@@ -123,7 +123,7 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail("owner@acme.test")).thenReturn(Mono.just(user));
         when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
-        when(membershipRepository.findFirstByUserIdOrderByCreatedAtAsc(1L)).thenReturn(Mono.just(membership));
+        when(membershipRepository.findFirstByUserIdOrderByCreatedAtDesc(1L)).thenReturn(Mono.just(membership));
         when(organizationRepository.findById(10L)).thenReturn(Mono.just(org));
         when(refreshTokenRepository.save(any())).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
 

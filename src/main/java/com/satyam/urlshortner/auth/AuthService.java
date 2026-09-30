@@ -37,7 +37,7 @@ public class AuthService {
                         : createOrganization(request.organizationName()))
                 .flatMap(org -> subscriptionService.createDefaultSubscription(org.getId()).thenReturn(org))
                 .flatMap(org -> createUser(request).flatMap(user -> createMembership(user, org, Role.OWNER)
-                        .flatMap(membership -> issueTokens(user, membership, org))));
+                        .flatMap(membership -> issueTokensForMembership(user, membership, org))));
     }
 
     public Mono<AuthResult> login(String email, String password) {
@@ -74,13 +74,13 @@ public class AuthService {
     }
 
     private Mono<AuthResult> issueTokensForCurrentOrg(User user) {
-        return membershipRepository.findFirstByUserIdOrderByCreatedAtAsc(user.getId())
+        return membershipRepository.findFirstByUserIdOrderByCreatedAtDesc(user.getId())
                 .switchIfEmpty(Mono.error(new NoOrganizationMembershipException(user.getId())))
                 .flatMap(membership -> organizationRepository.findById(membership.getOrgId())
-                        .flatMap(org -> issueTokens(user, membership, org)));
+                        .flatMap(org -> issueTokensForMembership(user, membership, org)));
     }
 
-    private Mono<AuthResult> issueTokens(User user, Membership membership, Organization org) {
+    public Mono<AuthResult> issueTokensForMembership(User user, Membership membership, Organization org) {
         AuthPrincipal principal = AuthPrincipal.forUser(user.getId(), user.getEmail(), org.getId(), membership.getRole());
         String accessToken = jwtService.issueAccessToken(principal);
         String rawRefreshToken = jwtService.generateRefreshTokenValue();
