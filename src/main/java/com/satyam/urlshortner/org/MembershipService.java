@@ -51,11 +51,13 @@ public class MembershipService {
         return invitationRepository.findByToken(token)
                 .switchIfEmpty(Mono.error(new InvitationNotFoundException(token)))
                 .flatMap(invitation -> validateInvitation(invitation, principal))
-                .flatMap(invitation -> membershipRepository.save(new Membership(null, principal.userId(), invitation.getOrgId(), invitation.getRole(), Instant.now()))
-                        .flatMap(membership -> invitationRepository.acceptByToken(token, Instant.now())
-                                .then(Mono.zip(
+                .flatMap(invitation -> invitationRepository.acceptByToken(token, Instant.now())
+                        .flatMap(updatedCount -> updatedCount > 0
+                                ? membershipRepository.save(new Membership(null, principal.userId(), invitation.getOrgId(), invitation.getRole(), Instant.now()))
+                                : Mono.error(new InvitationExpiredException(token)))
+                        .flatMap(membership -> Mono.zip(
                                         userRepository.findById(principal.userId()),
-                                        organizationRepository.findById(invitation.getOrgId())))
+                                        organizationRepository.findById(invitation.getOrgId()))
                                 .map(tuple -> new AcceptedInvitation(tuple.getT1(), membership, tuple.getT2()))));
     }
 

@@ -114,6 +114,21 @@ class MembershipServiceTest {
                 .verifyComplete();
     }
 
+    @Test
+    void acceptInvitationFailsWhenAcceptByTokenLosesRace() {
+        Invitation invitation = new Invitation(1L, 10L, MEMBER.email(), Role.MEMBER, "tok", 2L,
+                Instant.now().plusSeconds(3600), null, Instant.now());
+
+        when(invitationRepository.findByToken("tok")).thenReturn(Mono.just(invitation));
+        when(invitationRepository.acceptByToken(eq("tok"), any())).thenReturn(Mono.just(0));
+
+        StepVerifier.create(membershipService.acceptInvitation(MEMBER, "tok"))
+                .expectError(InvitationExpiredException.class)
+                .verify();
+
+        verifyNoInteractions(membershipRepository);
+    }
+
     @SuppressWarnings("unchecked")
     private <T> T withId(Object entity, Long id) {
         if (entity instanceof Invitation invitation) {
