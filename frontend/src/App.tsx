@@ -11,6 +11,7 @@ import LinksPage from "@/pages/LinksPage";
 import LinkDetailPage from "@/pages/LinkDetailPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import DomainsPage from "@/pages/DomainsPage";
+import TeamPage from "@/pages/TeamPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
 import UnlockPage from "@/pages/UnlockPage";
 import BillingPage from "@/pages/BillingPage";
@@ -34,6 +35,7 @@ function App() {
                 <Route path="links/:code" element={<LinkDetailPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="domains" element={<DomainsPage />} />
+                <Route path="team" element={<TeamPage />} />
                 <Route path="api-keys" element={<ApiKeysPage />} />
                 <Route path="billing" element={<BillingPage />} />
               </Route>

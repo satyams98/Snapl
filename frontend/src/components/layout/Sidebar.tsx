@@ -8,6 +8,7 @@ import {
   Link2,
   PanelLeftClose,
   PanelLeftOpen,
+  Users,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Organization",
     items: [
       { to: "/domains", label: "Domains", icon: Globe },
+      { to: "/team", label: "Team", icon: Users },
       { to: "/api-keys", label: "API Keys", icon: KeyRound },
       { to: "/billing", label: "Billing", icon: CreditCard },
     ],
