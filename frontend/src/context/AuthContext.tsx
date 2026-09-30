@@ -23,6 +23,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string, organizationName: string) => Promise<void>;
   logout: () => Promise<void>;
+  acceptInvitation: (token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -65,13 +66,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(toAuthUser(response));
   }
 
+  async function acceptInvitation(token: string) {
+    const response = await apiFetch<AuthResponse>(`/api/orgs/invitations/${token}/accept`, {
+      method: "POST",
+    });
+    setAccessToken(response.accessToken);
+    setUser(toAuthUser(response));
+  }
+
   async function logout() {
     await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     setAccessToken(null);
     setUser(null);
   }
 
-  return <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, acceptInvitation }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {
