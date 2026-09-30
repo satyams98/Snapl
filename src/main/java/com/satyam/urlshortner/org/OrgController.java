@@ -1,9 +1,13 @@
 package com.satyam.urlshortner.org;
 
-import com.satyam.urlshortner.auth.AuthPrincipal;
+import com.satyam.urlshortner.auth.AuthResponse;
+import com.satyam.urlshortner.auth.AuthService;
 import com.satyam.urlshortner.auth.CurrentUser;
+import com.satyam.urlshortner.auth.RefreshCookieIssuer;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,6 +18,8 @@ import reactor.core.publisher.Mono;
 public class OrgController {
 
     private final MembershipService membershipService;
+    private final AuthService authService;
+    private final RefreshCookieIssuer refreshCookieIssuer;
 
     @GetMapping("/me")
     public Mono<OrganizationResponse> currentOrganization() {
@@ -31,7 +37,10 @@ public class OrgController {
     }
 
     @PostMapping("/invitations/{token}/accept")
-    public Mono<MemberResponse> acceptInvitation(@PathVariable String token) {
-        return CurrentUser.get().flatMap(principal -> membershipService.acceptInvitation(principal, token));
+    public Mono<ResponseEntity<AuthResponse>> acceptInvitation(@PathVariable String token, ServerHttpResponse response) {
+        return CurrentUser.get()
+                .flatMap(principal -> membershipService.acceptInvitation(principal, token))
+                .flatMap(accepted -> authService.issueTokensForMembership(accepted.user(), accepted.membership(), accepted.organization()))
+                .map(result -> refreshCookieIssuer.issue(result, response));
     }
 }
