@@ -47,14 +47,16 @@ public class MembershipService {
                 .map(saved -> new InvitationResponse(saved.getId(), saved.getEmail(), saved.getRole(), saved.getToken(), saved.getExpiresAt()));
     }
 
-    public Mono<MemberResponse> acceptInvitation(AuthPrincipal principal, String token) {
+    public Mono<AcceptedInvitation> acceptInvitation(AuthPrincipal principal, String token) {
         return invitationRepository.findByToken(token)
                 .switchIfEmpty(Mono.error(new InvitationNotFoundException(token)))
                 .flatMap(invitation -> validateInvitation(invitation, principal))
                 .flatMap(invitation -> membershipRepository.save(new Membership(null, principal.userId(), invitation.getOrgId(), invitation.getRole(), Instant.now()))
                         .flatMap(membership -> invitationRepository.acceptByToken(token, Instant.now())
-                                .then(userRepository.findById(principal.userId()))
-                                .map(user -> new MemberResponse(user.getId(), user.getEmail(), user.getName(), membership.getRole()))));
+                                .then(Mono.zip(
+                                        userRepository.findById(principal.userId()),
+                                        organizationRepository.findById(invitation.getOrgId())))
+                                .map(tuple -> new AcceptedInvitation(tuple.getT1(), membership, tuple.getT2()))));
     }
 
     private Mono<Invitation> validateInvitation(Invitation invitation, AuthPrincipal principal) {

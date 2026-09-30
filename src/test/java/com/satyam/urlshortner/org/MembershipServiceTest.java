@@ -97,14 +97,20 @@ class MembershipServiceTest {
         Invitation invitation = new Invitation(1L, 10L, MEMBER.email(), Role.MEMBER, "tok", 2L,
                 Instant.now().plusSeconds(3600), null, Instant.now());
         User user = new User(MEMBER.userId(), MEMBER.email(), "hashed", "Member", Instant.now());
+        Organization org = new Organization(10L, "Acme", "acme", Instant.now());
 
         when(invitationRepository.findByToken("tok")).thenReturn(Mono.just(invitation));
         when(membershipRepository.save(any())).thenAnswer(inv -> Mono.just(withId(inv.getArgument(0), 55L)));
         when(invitationRepository.acceptByToken(eq("tok"), any())).thenReturn(Mono.just(1));
         when(userRepository.findById(MEMBER.userId())).thenReturn(Mono.just(user));
+        when(organizationRepository.findById(10L)).thenReturn(Mono.just(org));
 
         StepVerifier.create(membershipService.acceptInvitation(MEMBER, "tok"))
-                .assertNext(response -> assertEquals(Role.MEMBER, response.role()))
+                .assertNext(accepted -> {
+                    assertEquals(Role.MEMBER, accepted.membership().getRole());
+                    assertEquals("Acme", accepted.organization().getName());
+                    assertEquals(MEMBER.email(), accepted.user().getEmail());
+                })
                 .verifyComplete();
     }
 
