@@ -15,6 +15,7 @@ import TeamPage from "@/pages/TeamPage";
 import ApiKeysPage from "@/pages/ApiKeysPage";
 import UnlockPage from "@/pages/UnlockPage";
 import BillingPage from "@/pages/BillingPage";
+import AcceptInvitationPage from "@/pages/AcceptInvitationPage";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/unlock/:code" element={<UnlockPage />} />
+            <Route path="/invitations/:token" element={<AcceptInvitationPage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
                 <Route path="dashboard" element={<DashboardPage />} />
